@@ -1,0 +1,136 @@
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  padding: 1.25rem;
+}
+
+.authContainer {
+  max-width: 400px;
+  margin: auto;
+  padding: var(--spacing-2xl);
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.logo {
+  color: var(--primary);
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.0625rem;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}
+
+.form {
+  margin-bottom: 1.25rem;
+}
+
+.inputGroup {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.inputGroup input {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) 2.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-base);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+}
+
+.errorText {
+  font-size: 0.8125rem;
+  color: #E24B4A;
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+  text-align: left;
+}
+
+.submitBtn {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-base);
+  background-color: var(--primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  margin-top: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggleContainer {
+  text-align: center;
+}
+
+.toggleText {
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.toggleBtn {
+  background: none;
+  border: 0.125rem solid var(--primary);
+  color: var(--primary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+  background-color: var(--primary);
+  color: white;
+}

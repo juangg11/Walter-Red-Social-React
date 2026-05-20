@@ -1,0 +1,155 @@
+.sidebarLeft,
+.sidebarRight {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.sidebarLeft h3,
+.sidebarRight h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.headerRow h3 {
+  margin-bottom: 0;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.textBtn:hover {
+  color: var(--primary-hover);
+}
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.communityItem {
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.communityItemNormal {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.communityItemNormal:hover {
+  background-color: var(--border-light);
+}
+
+.communityItemSelected {
+  background-color: var(--primary);
+  color: white;
+}
+
+.communityItemSelected:hover {
+  background-color: var(--primary-hover);
+}
+
+.communityItem input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.emptyText {
+  color: var(--secondary);
+  font-size: 12px;
+}
+
+.moreBtn {
+  background: none;
+  border: 1px solid var(--border-light);
+  color: var(--primary);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.moreBtn:hover {
+  border-color: var(--primary);
+  background-color: var(--bg-secondary);
+}
+
+/* Trending Specifics */
+.trendingTitle {
+  text-align: center;
+}
+
+.trendingItem {
+  padding: 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: var(--bg-secondary);
+}
+
+.trendingItem:hover {
+  background-color: var(--border-light);
+}
+
+.trendingPostTitle {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.trendingVotesCount {
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+@media (max-width: 1200px) {
+  .sidebarLeft {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebarRight {
+    display: none;
+  }
+}
+

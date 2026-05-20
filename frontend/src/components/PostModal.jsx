@@ -1,41 +1,26 @@
 import { useState, useEffect } from 'react';
 import { ArrowBigUp, ArrowBigDown, Repeat2, X } from 'lucide-react';
-import { api } from '../api/client';
+import request from '../api/client';
 import { computeVote } from '../utils/computeVote';
+import styles from './PostModal.module.css';
 
 export default function PostModal({ post, onClose, user, onCommentAdded, onPostUpdated, onAuthorClick = null, onShare = null }) {
-  const [postData, setPostData]     = useState(post);
-  const [comments, setComments]     = useState([]);
+  const [postData, setPostData] = useState(post);
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [userVote, setUserVote]     = useState(post.voto_usuario ?? null);
-
-  useEffect(() => {
-    if (!post?.id) return;
-    async function loadPost() {
-      try {
-        const data = await api.get(`/publicaciones/${post.id}?userId=${user.id}`);
-        setPostData(data);
-        setUserVote(data.voto_usuario ?? null);
-        onPostUpdated?.(data);
-      } catch {
-        setPostData(post);
-        setUserVote(post.voto_usuario ?? null);
-      }
-    }
-    loadPost();
-  }, [post?.id, user.id]);
+  const [userVote, setUserVote] = useState(post.voto_usuario ?? null);
 
   useEffect(() => {
     if (!post?.id) return;
     fetchComments();
-  }, [post?.id]);
+  }, []);
 
   async function fetchComments() {
     setLoading(true);
     try {
-      const data = await api.get(`/comentarios?publicacion_id=${post.id}`);
+      const data = await request(`/comentarios?publicacion_id=${post.id}`);
       setComments(data);
     } catch (e) {
       console.error('fetchComments:', e);
@@ -56,16 +41,12 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
     onPostUpdated?.(updated);
 
     try {
-      const result = await api.post(`/publicaciones/${post.id}/votar`, { tipo_voto: voteType });
-      const serverPost = result.post || { ...updated, votos: result.votos, voto_usuario: result.voto };
-      setPostData(serverPost);
-      setUserVote(result.voto);
-      onPostUpdated?.(serverPost);
+      const result = await request(`/publicaciones/${post.id}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
+      setPostData(result.post || updated);
+      setUserVote(result.voto || nextVote);
     } catch (e) {
-      // Revertir
       setPostData(postData);
       setUserVote(userVote);
-      onPostUpdated?.(postData);
     }
   }
 
@@ -73,75 +54,70 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
     if (!content.trim()) return;
     setSubmitting(true);
     try {
-      const data = await api.post('/comentarios', {
-        contenido: content,
-        publicacion_id: post.id,
-        comentario_padre_id: parentId,
-      });
-
-      const updatedComments = [...comments, data];
-      const updatedCount    = (postData.numero_comentarios ?? 0) + 1;
-      const updatedPost     = { ...postData, numero_comentarios: updatedCount };
-
-      setComments(updatedComments);
+      const data = await request('/comentarios', { method: 'POST', body: JSON.stringify({ contenido: content, publicacion_id: post.id, comentario_padre_id: parentId }) });
+      setComments([...comments, data]);
       if (!parentId) setNewComment('');
-      setPostData(updatedPost);
-      onCommentAdded?.(updatedCount);
-      onPostUpdated?.(updatedPost);
-      return data;
+      const count = (postData.numero_comentarios ?? 0) + 1;
+      setPostData({ ...postData, numero_comentarios: count });
+      onCommentAdded?.(count);
     } catch (e) {
       console.error('addComment:', e);
-      return null;
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <button className={styles.modalClose} onClick={onClose}>
           <X size={24} />
         </button>
 
         {/* Post */}
-        <div className="modal-post">
-          <div className="modal-post-meta">
-            Publicado por <button className="inline-user-link" onClick={() => onAuthorClick?.(postData?.username)}>w/{postData?.username ?? 'anon'}</button>
+        <div className={styles.modalPost}>
+          <div className={styles.modalPostMeta}>
+            Publicado por <button className={styles.inlineUserLink} onClick={() => onAuthorClick?.(postData?.username)}>w/{postData?.username ?? 'anon'}</button>
             {postData?.comunidad_nombre ? ` en w/${postData.comunidad_nombre}` : ''}
           </div>
-          <h1 className="modal-post-title">{postData?.titulo}</h1>
+          <h1 className={styles.modalPostTitle}>{postData?.titulo}</h1>
 
           {postData?.url_video ? (
-            <video src={postData.url_video} controls style={{ width: '100%', borderRadius: 'var(--border-radius-md)', margin: 'var(--spacing-lg) 0', maxHeight: '31.25rem', objectFit: 'cover', background: '#000' }} />
+            <video src={postData.url_video} controls />
           ) : postData?.url_imagen ? (
-            <img src={postData.url_imagen} alt={postData.titulo} style={{ maxWidth: '100%', borderRadius: 'var(--border-radius-md)', margin: 'var(--spacing-lg) 0', maxHeight: '31.25rem', objectFit: 'cover' }} />
+            <img src={postData.url_imagen} alt={postData.titulo} />
           ) : null}
 
-          <div className="modal-post-content">{postData?.contenido}</div>
+          <div className={styles.modalPostContent}>{postData?.contenido}</div>
         </div>
 
         {/* Votos */}
-        <div className="modal-votes">
-          <button className="modal-vote-btn" title="Votar positivo" onClick={() => handleVote('up')}
-            style={{ color: userVote === 'up' ? 'var(--primary)' : 'var(--secondary)', fontWeight: userVote === 'up' ? '700' : '400' }}>
+        <div className={styles.modalVotes}>
+          <button
+            className={`${styles.modalVoteBtn} ${userVote === 'up' ? styles.modalVoteBtnActive : ''}`}
+            title="Votar positivo"
+            onClick={() => handleVote('up')}
+          >
             <ArrowBigUp size={20} />
           </button>
-          <span className="modal-vote-count">{postData?.votos ?? 0}</span>
-          <button className="modal-vote-btn" title="Votar negativo" onClick={() => handleVote('down')}
-            style={{ color: userVote === 'down' ? 'var(--primary)' : 'var(--secondary)', fontWeight: userVote === 'down' ? '700' : '400' }}>
+          <span className={styles.modalVoteCount}>{postData?.votos ?? 0}</span>
+          <button
+            className={`${styles.modalVoteBtn} ${userVote === 'down' ? styles.modalVoteBtnActive : ''}`}
+            title="Votar negativo"
+            onClick={() => handleVote('down')}
+          >
             <ArrowBigDown size={20} />
           </button>
-          <button className="modal-vote-btn" onClick={() => onShare?.(postData)}>
+          <button className={styles.modalVoteBtn} onClick={() => onShare?.(postData)}>
             <Repeat2 size={18} />
             <span>{postData?.compartido_por_usuario ? 'Compartido' : 'Compartir'}</span>
           </button>
         </div>
         {/* Comentarios */}
-        <div className="comments-section">
+        <div className={styles.commentsSection}>
           <h3>Comentarios ({comments.length})</h3>
 
-          <div className="comment-form">
+          <div className={styles.commentForm}>
             <textarea
               placeholder="Escribe un comentario..."
               value={newComment}
@@ -152,11 +128,11 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
             </button>
           </div>
 
-          <div className="comments-list">
+          <div className={styles.commentsList}>
             {loading ? (
-              <div className="no-comments">Cargando comentarios...</div>
+              <div className={styles.noComments}>Cargando comentarios...</div>
             ) : comments.length === 0 ? (
-              <div className="no-comments">Sin comentarios aún</div>
+              <div className={styles.noComments}>Sin comentarios aún</div>
             ) : (
               <CommentTree comments={comments} onReply={addComment} />
             )}
@@ -200,21 +176,21 @@ function CommentItem({ comment, repliesByParent, onReply }) {
   }
 
   return (
-    <div className="comment-item">
-      <div className="comment-meta">w/{comment.username}</div>
-      <p className="comment-text">{comment.contenido}</p>
-      <div className="comment-actions">
+    <div className={styles.commentItem}>
+      <div className={styles.commentMeta}>w/{comment.username}</div>
+      <p className={styles.commentText}>{comment.contenido}</p>
+      <div className={styles.commentActions}>
         <span>{new Date(comment.fecha_creacion).toLocaleDateString()}</span>
         <button onClick={() => setOpen(v => !v)}>Responder</button>
       </div>
       {open && (
-        <div className="reply-form">
-          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Responder comentario..." />
+        <div className={styles.replyForm}>
+          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Responder comentario" />
           <button onClick={submitReply} disabled={!text.trim()}>Enviar</button>
         </div>
       )}
       {replies.length > 0 && (
-        <div className="comment-replies">
+        <div className={styles.commentReplies}>
           {replies.map(reply => (
             <CommentItem
               key={reply.id}
@@ -228,3 +204,4 @@ function CommentItem({ comment, repliesByParent, onReply }) {
     </div>
   );
 }
+

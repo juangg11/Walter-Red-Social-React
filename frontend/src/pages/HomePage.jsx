@@ -1,9 +1,10 @@
 import Feed from '../components/Feed';
 import { CommunitiesSidebar, TrendingSidebar } from '../components/Sidebar';
+import styles from '../App.module.css';
 
 export default function HomePage({ user, searchQuery, selectedCommunities, setSelectedCommunities, communities, onPostClick }) {
   return (
-    <main className="main-content">
+    <main className={styles.mainContent}>
       <CommunitiesSidebar
         communities={communities}
         selectedCommunities={selectedCommunities}
@@ -19,3 +20,4 @@ export default function HomePage({ user, searchQuery, selectedCommunities, setSe
     </main>
   );
 }
+

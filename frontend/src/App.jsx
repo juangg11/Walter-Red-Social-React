@@ -8,8 +8,8 @@ import CommunitiesPage from './pages/CommunitiesPage';
 import ChatPage from './pages/ChatPage';
 import SettingsPage from './pages/SettingsPage';
 import UserPage from './pages/UserPage';
-import { api, getChatSocketUrl } from './api/client';
-import './App.css';
+import request, { getChatSocketUrl } from './api/client';
+import styles from './App.module.css';
 
 const DEFAULT_SETTINGS = {
   theme: 'light',
@@ -23,20 +23,19 @@ const DEFAULT_SETTINGS = {
 };
 
 function App() {
-  const [user, setUser]                           = useState(null);
-  const [searchQuery, setSearchQuery]             = useState('');
+  const [user, setUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCommunities, setSelectedCommunities] = useState([]);
-  const [communities, setCommunities]             = useState([]);
+  const [communities, setCommunities] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [selectedPost, setSelectedPost]           = useState(null);
-  const [activeTab, setActiveTab]                 = useState('feed');
-  const [loading, setLoading]                     = useState(true);
-  const [chatToast, setChatToast]                 = useState(null);
-  const [settings, setSettings]                   = useState(DEFAULT_SETTINGS);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [activeTab, setActiveTab] = useState('feed');
+  const [loading, setLoading] = useState(true);
+  const [chatToast, setChatToast] = useState(null);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Restaurar sesión desde localStorage
   useEffect(() => {
     const stored = localStorage.getItem('user');
     const token  = localStorage.getItem('token');
@@ -89,7 +88,7 @@ function App() {
       if (payload.type !== 'chat:message') return;
       if (payload.message.usuario_id === user.id) return;
 
-      setNotificationCount(current => current + 1);
+      setNotificationCount(notificationCount + 1);
       if (settings.notifications.chatToasts) {
         setChatToast({
           id: payload.message.id,
@@ -98,14 +97,9 @@ function App() {
         });
       }
 
-      if (
-        settings.notifications.desktopMessages &&
-        typeof window !== 'undefined' &&
-        'Notification' in window &&
-        Notification.permission === 'granted'
-      ) {
+      if (settings.notifications.desktopMessages && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         new Notification(`w/${payload.message.username}`, {
-          body: payload.message.contenido || 'Te ha enviado una imagen',
+          body: payload.message.contenido,
         });
       }
     };
@@ -121,7 +115,7 @@ function App() {
 
   async function loadCommunities() {
     try {
-      const data = await api.get(`/comunidades?userId=${user.id}`);
+      const data = await request(`/comunidades?userId=${user.id}`);
       setCommunities(data);
     } catch (e) {
       console.error('Error loading communities:', e);
@@ -130,7 +124,7 @@ function App() {
 
   async function loadNotificationCount() {
     try {
-      const data = await api.get('/notificaciones/no-leidas');
+      const data = await request('/notificaciones/no-leidas');
       setNotificationCount(data.total);
     } catch (e) {
       console.error('Error loading notifications:', e);
@@ -179,7 +173,7 @@ function App() {
   if (!user) return <Auth onLogin={handleLogin} />;
 
   return (
-    <div className="app-layout">
+    <div className={styles.appLayout}>
       <Navbar
         user={user}
         onSearchChange={setSearchQuery}
@@ -229,7 +223,7 @@ function App() {
       {chatToast && (
         <button
           type="button"
-          className="chat-toast"
+          className={styles.chatToast}
           onClick={() => {
             setChatToast(null);
             navigate('/mensajes');

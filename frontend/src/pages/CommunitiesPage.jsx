@@ -1,9 +1,11 @@
 import Communities from '../components/Comunidades';
+import styles from '../App.module.css';
 
 export default function CommunitiesPage({ user, onCommunityCreated }) {
   return (
-    <main className="page-shell">
+    <main className={styles.pageShell}>
       <Communities user={user} onCommunityCreated={onCommunityCreated} />
     </main>
   );
 }
+

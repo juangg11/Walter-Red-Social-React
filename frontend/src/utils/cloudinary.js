@@ -1,7 +1,7 @@
-import { api } from '../api/client';
+import request from '../api/client';
 
 export async function uploadToCloudinary(file, folder) {
-  const sig = await api.post('/media/signature', { folder });
+  const sig = await request('/media/signature', { folder });
   const formData = new FormData();
   formData.append('file', file);
   formData.append('api_key', sig.apiKey);
@@ -19,7 +19,7 @@ export async function uploadToCloudinary(file, folder) {
     throw new Error(uploadData?.error?.message || 'Error al subir archivo');
   }
 
-  const saved = await api.post('/media/commit', {
+  const saved = await request('/media/commit', {
     public_id: uploadData.public_id,
     secure_url: uploadData.secure_url,
     resource_type: uploadData.resource_type,

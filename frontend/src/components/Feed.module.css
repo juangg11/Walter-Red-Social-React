@@ -1,0 +1,195 @@
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: 7px;
+}
+
+.postCard {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  animation: fadeIn 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.postCard:hover {
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.postCard::before {
+  content: '';
+  width: 4px;
+  background: linear-gradient(180deg, rgba(119,20,39,0.95), rgba(237,158,174,0.9));
+  flex-shrink: 0;
+}
+
+.votes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  background-color: var(--bg-tertiary);
+  min-width: 58px;
+  color: var(--secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.voteCount {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.voteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--secondary);
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voteBtn:hover {
+  color: var(--primary);
+}
+
+.voteBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.postContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  min-width: 0;
+}
+
+.postMeta {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+}
+
+.postContent h3 {
+  font-size: var(--font-size-lg);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-sm);
+  color: var(--secondary);
+}
+
+.postContent img,
+.postContent video {
+  width: 100%;
+  max-width: 100%;
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+  max-height: 25rem;
+  object-fit: cover;
+}
+
+.postContent video {
+  background: #000;
+}
+
+.postContent > p {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-md);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.postFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.postFooter svg {
+  width: 16px;
+  height: 16px;
+}
+
+.postShareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  color: var(--secondary);
+}
+
+.postShareBtn:hover {
+  color: var(--primary-hover);
+}
+
+.emptyCard {
+  padding: 2.5rem;
+  text-align: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+}
+
+.emptyCardContent {
+  color: var(--secondary);
+}
+
+.emptyCardContent h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.floatingCreateBtn {
+  position: fixed;
+  bottom: 1.875rem;
+  right: 1.875rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0.25rem 0.75rem rgba(237, 158, 174, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
+  z-index: 100;
+}
+
+.floatingCreateBtn:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+.floatingCreateBtn:active {
+  transform: scale(0.95);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

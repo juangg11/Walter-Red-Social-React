@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CalendarDays, MessageSquare, UserPlus, UserRoundCheck } from 'lucide-react';
-import { api } from '../api/client';
+import request from '../api/client';
 import { PostCard } from '../components/Feed';
 import PostModal from '../components/PostModal';
 import { computeVote } from '../utils/computeVote';
+import styles from './UserPage.module.css';
 
 const TABS = [
   ['posts', 'Posts'],
@@ -35,10 +36,10 @@ export default function UserPage({ user, onUserUpdate }) {
     setLoading(true);
     try {
       const [profileData, postsData, commentsData, sharedData] = await Promise.all([
-        api.get(`/usuarios/perfil/${username}`),
-        api.get(`/usuarios/perfil/${username}/publicaciones`),
-        api.get(`/usuarios/perfil/${username}/comentarios`),
-        api.get(`/usuarios/perfil/${username}/compartidos`),
+        request(`/usuarios/perfil/${username}`),
+        request(`/usuarios/perfil/${username}/publicaciones`),
+        request(`/usuarios/perfil/${username}/comentarios`),
+        request(`/usuarios/perfil/${username}/compartidos`),
       ]);
 
       setProfile(profileData);
@@ -58,11 +59,9 @@ export default function UserPage({ user, onUserUpdate }) {
     setLoading(false);
   }
 
-  function syncPost(updatedPost) {
-    setPosts(cur => cur.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post));
-    setSharedPosts(cur => cur.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post));
-    setUserVotes(cur => ({ ...cur, [updatedPost.id]: updatedPost.voto_usuario ?? cur[updatedPost.id] ?? null }));
-    setSelectedPost(cur => cur?.id === updatedPost.id ? { ...cur, ...updatedPost } : cur);
+  function updatePost(updatedPost) {
+    setPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
+    setSharedPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
   }
 
   async function handleVote(postId, voteType) {
@@ -75,23 +74,22 @@ export default function UserPage({ user, onUserUpdate }) {
       votes: post.votos,
     });
 
-    syncPost({ ...post, votos: votes, voto_usuario: nextVote });
-
+    updatePost({ ...post, votos: votes, voto_usuario: nextVote });
     try {
-      const result = await api.post(`/publicaciones/${postId}/votar`, { tipo_voto: voteType });
-      syncPost(result.post || { ...post, votos: result.votos, voto_usuario: result.voto });
+      const result = await request(`/publicaciones/${postId}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
+      updatePost(result.post || { ...post, votos: result.votos, voto_usuario: result.voto });
     } catch (e) {
-      syncPost(post);
+      updatePost(post);
     }
   }
 
   async function handleShare(post) {
     try {
       const updated = post.compartido_por_usuario
-        ? await api.delete(`/usuarios/compartidos/${post.id}`)
-        : await api.post(`/usuarios/compartidos/${post.id}`, {});
+        ? await request(`/usuarios/compartidos/${post.id}`, { method: 'DELETE' })
+        : await request(`/usuarios/compartidos/${post.id}`, { method: 'POST', body: JSON.stringify({}) });
 
-      syncPost(updated);
+      updatePost(updated);
       if (!post.compartido_por_usuario) {
         setSharedPosts(cur => cur.some(item => item.id === updated.id) ? cur : [updated, ...cur]);
       } else if (profile?.is_me) {
@@ -105,9 +103,7 @@ export default function UserPage({ user, onUserUpdate }) {
   async function handleFollow() {
     if (!profile) return;
     try {
-      const next = profile.is_following
-        ? await api.delete(`/usuarios/${profile.username}/follow`)
-        : await api.post(`/usuarios/${profile.username}/follow`, {});
+      const next = profile.is_following ? await request(`/usuarios/${profile.username}/follow`, { method: 'DELETE' }) : await request(`/usuarios/${profile.username}/follow`, { method: 'POST', body: JSON.stringify({}) });
       setProfile(next);
     } catch (e) {
       console.error('handleFollow:', e);
@@ -117,7 +113,7 @@ export default function UserPage({ user, onUserUpdate }) {
   async function handleSaveBio() {
     setSavingBio(true);
     try {
-      const updated = await api.patch('/usuarios/perfil', { bio: bioDraft });
+      const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ bio: bioDraft }) });
       onUserUpdate?.(updated);
       setProfile(cur => cur ? { ...cur, bio: updated.bio } : cur);
     } catch (e) {
@@ -128,7 +124,7 @@ export default function UserPage({ user, onUserUpdate }) {
 
   async function openPost(postId) {
     try {
-      const data = await api.get(`/publicaciones/${postId}?userId=${user.id}`);
+      const data = await request(`/publicaciones/${postId}?userId=${user.id}`);
       setSelectedPost(data);
     } catch (e) {
       console.error('openPost:', e);
@@ -136,11 +132,11 @@ export default function UserPage({ user, onUserUpdate }) {
   }
 
   if (loading) {
-    return <main className="profile-page"><div className="profile-shell"><div className="profile-panel">Cargando perfil...</div></div></main>;
+    return <main className={styles.profilePage}><div className={styles.profileShell}><div className={styles.profilePanel}>Cargando perfil...</div></div></main>;
   }
 
   if (!profile) {
-    return <main className="profile-page"><div className="profile-shell"><div className="profile-panel">Perfil no encontrado.</div></div></main>;
+    return <main className={styles.profilePage}><div className={styles.profileShell}><div className={styles.profilePanel}>Perfil no encontrado.</div></div></main>;
   }
 
   const joinedDate = profile.fecha_creacion
@@ -148,30 +144,30 @@ export default function UserPage({ user, onUserUpdate }) {
     : 'Sin fecha';
 
   return (
-    <main className="profile-page">
-      <div className="profile-shell">
-        <section className="profile-header">
-          <div className="profile-cover" />
-          <div className="profile-header-body">
-            <div className="profile-avatar-large">
+    <main className={styles.profilePage}>
+      <div className={styles.profileShell}>
+        <section className={styles.profileHeader}>
+          <div className={styles.profileCover} />
+          <div className={styles.profileHeaderBody}>
+            <div className={styles.profileAvatarLarge}>
               {profile.avatar_url ? <img src={profile.avatar_url} alt={profile.username} /> : <span>{profile.username.slice(0, 2).toUpperCase()}</span>}
             </div>
 
-            <div className="profile-title-block">
-              <div className="profile-title-row">
+            <div className={styles.profileTitleBlock}>
+              <div className={styles.profileTitleRow}>
                 <div>
                   <h1>w/{profile.username}</h1>
                   <span>{profile.email}</span>
                 </div>
                 {!profile.is_me && (
-                  <button type="button" className="profile-follow-btn" onClick={handleFollow}>
+                  <button type="button" className={styles.profileFollowBtn} onClick={handleFollow}>
                     {profile.is_following ? <UserRoundCheck size={16} /> : <UserPlus size={16} />}
                     <span>{profile.is_following ? 'Siguiendo' : 'Seguir'}</span>
                   </button>
                 )}
               </div>
 
-              <div className="profile-stats">
+              <div className={styles.profileStats}>
                 <Stat label="Posts" value={profile.counts.posts_count} />
                 <Stat label="Respuestas" value={profile.counts.comments_count} />
                 <Stat label="Compartidos" value={profile.counts.shared_count} />
@@ -181,19 +177,19 @@ export default function UserPage({ user, onUserUpdate }) {
             </div>
           </div>
 
-          <div className="profile-tabs">
+          <div className={styles.profileTabs}>
             {TABS.map(([id, label]) => (
-              <button key={id} type="button" className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
+              <button key={id} type="button" className={activeTab === id ? styles.active : ''} onClick={() => setActiveTab(id)}>
                 {label}
               </button>
             ))}
           </div>
         </section>
 
-        <section className="profile-grid">
-          <div className="profile-panel">
+        <section className={styles.profileGrid}>
+          <div className={styles.profilePanel}>
             {activeTab === 'posts' && (
-              <div className="profile-post-list">
+              <div className={styles.profilePostList}>
                 {posts.length > 0 ? posts.map(post => (
                   <PostCard
                     key={post.id}
@@ -209,15 +205,15 @@ export default function UserPage({ user, onUserUpdate }) {
             )}
 
             {activeTab === 'comments' && (
-              <div className="profile-comment-list">
+              <div className={styles.profileCommentList}>
                 {comments.length > 0 ? comments.map(comment => (
-                  <article key={comment.id} className="profile-comment-card">
-                    <div className="profile-comment-meta">
-                      <button type="button" className="inline-user-link" onClick={() => navigate(`/u/${profile.username}`)}>w/{profile.username}</button>
+                  <article key={comment.id} className={styles.profileCommentCard}>
+                    <div className={styles.profileCommentMeta}>
+                      <button type="button" className={styles.inlineUserLink} onClick={() => navigate(`/u/${profile.username}`)}>w/{profile.username}</button>
                       <span>en {comment.publicacion_titulo || 'Publicación'}</span>
                     </div>
                     <p>{comment.contenido}</p>
-                    <button type="button" className="profile-link-btn" onClick={() => openPost(comment.publicacion_ref_id)}>
+                    <button type="button" className={styles.profileLinkBtn} onClick={() => openPost(comment.publicacion_ref_id)}>
                       <MessageSquare size={16} />
                       <span>Ver post</span>
                     </button>
@@ -227,7 +223,7 @@ export default function UserPage({ user, onUserUpdate }) {
             )}
 
             {activeTab === 'shared' && (
-              <div className="profile-post-list">
+              <div className={styles.profilePostList}>
                 {sharedPosts.length > 0 ? sharedPosts.map(post => (
                   <PostCard
                     key={post.id}
@@ -243,16 +239,16 @@ export default function UserPage({ user, onUserUpdate }) {
             )}
           </div>
 
-          <aside className="profile-side">
-            <section className="profile-panel">
+          <aside className={styles.profileSide}>
+            <section className={styles.profilePanel}>
               <h3>Sobre w/{profile.username}</h3>
-              <p className="profile-about-text">{profile.bio || 'Sin biografía todavía.'}</p>
-              <div className="profile-created-row">
+              <p className={styles.profileAboutText}>{profile.bio || 'Sin biografía todavía.'}</p>
+              <div className={styles.profileCreatedRow}>
                 <CalendarDays size={16} />
                 <span>{joinedDate}</span>
               </div>
               {profile.is_me && (
-                <div className="profile-bio-editor">
+                <div className={styles.profileBioEditor}>
                   <textarea value={bioDraft} onChange={event => setBioDraft(event.target.value)} maxLength={280} placeholder="Biografía" />
                   <button type="button" onClick={handleSaveBio} disabled={savingBio}>
                     {savingBio ? 'Guardando...' : 'Guardar'}
@@ -260,11 +256,11 @@ export default function UserPage({ user, onUserUpdate }) {
                 </div>
               )}
             </section>
-            <section className="profile-panel">
+            <section className={styles.profilePanel}>
               <h3>Seguidores</h3>
               <UserList users={profile.followers} navigate={navigate} emptyText="Sin seguidores aún." />
             </section>
-            <section className="profile-panel">
+            <section className={styles.profilePanel}>
               <h3>Seguidos</h3>
               <UserList users={profile.following} navigate={navigate} emptyText="No sigue a nadie todavía." />
             </section>
@@ -277,7 +273,7 @@ export default function UserPage({ user, onUserUpdate }) {
           post={selectedPost}
           user={user}
           onClose={() => setSelectedPost(null)}
-          onPostUpdated={syncPost}
+          onPostUpdated={updatePost}
           onAuthorClick={handleUsernameClick}
           onShare={handleShare}
         />
@@ -293,7 +289,7 @@ export default function UserPage({ user, onUserUpdate }) {
 
 function Stat({ label, value }) {
   return (
-    <div className="profile-stat">
+    <div className={styles.profileStat}>
       <strong>{value ?? 0}</strong>
       <span>{label}</span>
     </div>
@@ -301,11 +297,11 @@ function Stat({ label, value }) {
 }
 
 function UserList({ users = [], navigate, emptyText }) {
-  if (!users.length) return <p className="profile-empty-copy">{emptyText}</p>;
+  if (!users.length) return <p className={styles.profileEmptyCopy}>{emptyText}</p>;
   return (
-    <div className="profile-user-list">
+    <div className={styles.profileUserList}>
       {users.map(item => (
-        <button key={item.id} type="button" className="profile-user-chip" onClick={() => navigate(`/u/${item.username}`)}>
+        <button key={item.id} type="button" className={styles.profileUserChip} onClick={() => navigate(`/u/${item.username}`)}>
           {item.avatar_url ? <img src={item.avatar_url} alt={item.username} /> : <span>{item.username.slice(0, 2).toUpperCase()}</span>}
           <small>w/{item.username}</small>
         </button>
@@ -315,5 +311,6 @@ function UserList({ users = [], navigate, emptyText }) {
 }
 
 function EmptyState({ text }) {
-  return <div className="profile-empty-copy">{text}</div>;
+  return <div className={styles.profileEmptyCopy}>{text}</div>;
 }
+

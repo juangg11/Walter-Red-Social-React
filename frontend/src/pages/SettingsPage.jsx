@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bell, ImagePlus, Moon, Type, UserRound } from 'lucide-react';
-import { api } from '../api/client';
+import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import styles from './SettingsPage.module.css';
 
 export default function SettingsPage({ user, settings, onSettingsChange, onUserUpdate }) {
   const fileInputRef = useRef(null);
@@ -14,20 +15,10 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
     setAvatarUrl(user.avatar_url || '');
   }, [user.avatar_url]);
 
-  const memberSince = useMemo(() => (
-    user.fecha_creacion
-      ? new Date(user.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
-      : 'Sin fecha disponible'
-  ), [user.fecha_creacion]);
+  const memberSince = user.fecha_creacion ? new Date(user.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Sin fecha disponible';
 
   function updateNotifications(patch) {
-    onSettingsChange({
-      ...settings,
-      notifications: {
-        ...settings.notifications,
-        ...patch,
-      },
-    });
+    onSettingsChange({ ...settings, notifications: { ...settings.notifications, ...patch } });
   }
 
   async function handleAvatarSelection(event) {
@@ -39,7 +30,7 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
 
     try {
       const uploaded = await uploadToCloudinary(file, 'walter/avatars');
-      const updated = await api.patch('/usuarios/perfil', { avatar_url: uploaded.asset.secure_url });
+      const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ avatar_url: uploaded.asset.secure_url }) });
       setAvatarUrl(updated.avatar_url || uploaded.asset.secure_url);
       onUserUpdate(updated);
       setAvatarStatus('Avatar actualizado.');
@@ -78,29 +69,29 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
   }
 
   return (
-    <main className="settings-page">
-      <div className="settings-shell">
-        <section className="settings-panel">
-          <div className="settings-section-title">
+    <main className={styles.settingsPage}>
+      <div className={styles.settingsShell}>
+        <section className={styles.settingsPanel}>
+          <div className={styles.settingsSectionTitle}>
             <UserRound size={16} />
             <h2>Cuenta</h2>
           </div>
 
-          <div className="settings-account-grid">
-            <div className="settings-avatar-block">
-              <div className="settings-avatar-frame">
+          <div className={styles.settingsAccountGrid}>
+            <div className={styles.settingsAvatarBlock}>
+              <div className={styles.settingsAvatarFrame}>
                 {avatarUrl ? <img src={avatarUrl} alt="Avatar" /> : <span>{user.username.slice(0, 2).toUpperCase()}</span>}
               </div>
-              <div className="settings-avatar-copy">
+              <div className={styles.settingsAvatarCopy}>
                 <strong>w/{user.username}</strong>
                 <span>{user.email}</span>
                 <small>Miembro desde {memberSince}</small>
               </div>
             </div>
 
-            <div className="settings-card-minimal">
-              <p className="settings-card-label">Avatar</p>
-              <div className="settings-inline-actions">
+            <div className={styles.settingsCardMinimal}>
+              <p className={styles.settingsCardLabel}>Avatar</p>
+              <div className={styles.settingsInlineActions}>
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
                   <ImagePlus size={16} />
                   <span>{uploadingAvatar ? 'Subiendo...' : 'Subir imagen'}</span>
@@ -113,20 +104,20 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
                   onChange={handleAvatarSelection}
                 />
               </div>
-              {avatarStatus && <p className="settings-inline-status">{avatarStatus}</p>}
+              {avatarStatus && <p className={styles.settingsInlineStatus}>{avatarStatus}</p>}
             </div>
           </div>
         </section>
 
-        <section className="settings-panel">
-          <div className="settings-section-title">
+        <section className={styles.settingsPanel}>
+          <div className={styles.settingsSectionTitle}>
             <Type size={16} />
             <h2>Lectura</h2>
           </div>
 
-          <div className="settings-text-size-row">
-            <span className="settings-row-label">Tamaño del texto</span>
-            <div className="settings-segmented">
+          <div className={styles.settingsTextSizeRow}>
+            <span className={styles.settingsRowLabel}>Tamaño del texto</span>
+            <div className={styles.settingsSegmented}>
               {[
                 ['md', 'Normal'],
                 ['lg', 'Grande'],
@@ -135,7 +126,7 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
                 <button
                   key={value}
                   type="button"
-                  className={settings.textSize === value ? 'active' : ''}
+                  className={settings.textSize === value ? styles.active : ''}
                   onClick={() => onSettingsChange({ ...settings, textSize: value })}
                 >
                   {label}
@@ -156,8 +147,8 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
           />
         </section>
 
-        <section className="settings-panel">
-          <div className="settings-section-title">
+        <section className={styles.settingsPanel}>
+          <div className={styles.settingsSectionTitle}>
             <Bell size={16} />
             <h2>Notificaciones</h2>
           </div>
@@ -172,11 +163,11 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
             checked={settings.notifications.desktopMessages}
             onChange={handleDesktopNotifications}
           />
-          {notificationStatus && <p className="settings-inline-status">{notificationStatus}</p>}
+          {notificationStatus && <p className={styles.settingsInlineStatus}>{notificationStatus}</p>}
         </section>
 
-        <section className="settings-panel">
-          <div className="settings-section-title">
+        <section className={styles.settingsPanel}>
+          <div className={styles.settingsSectionTitle}>
             <Moon size={16} />
             <h2>Apariencia</h2>
           </div>
@@ -194,13 +185,13 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
 
 function ToggleRow({ title, checked, onChange }) {
   return (
-    <div className="settings-toggle-row">
-      <div className="settings-toggle-copy">
+    <div className={styles.settingsToggleRow}>
+      <div className={styles.settingsToggleCopy}>
         <strong>{title}</strong>
       </div>
       <button
         type="button"
-        className={`settings-switch ${checked ? 'on' : ''}`}
+        className={`${styles.settingsSwitch} ${checked ? styles.settingsSwitchOn : ''}`}
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
       >
@@ -209,3 +200,4 @@ function ToggleRow({ title, checked, onChange }) {
     </div>
   );
 }
+

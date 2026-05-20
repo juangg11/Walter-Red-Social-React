@@ -1,0 +1,306 @@
+.chatPage {
+  width: 100%;
+  max-width: 1180px;
+  height: calc(100vh - 88px);
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.chatSidebar,
+.chatPanel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chatSidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.chatSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  padding: 0 0.75rem;
+  height: 2.5rem;
+  background: var(--bg-secondary);
+}
+
+.chatSearch input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.userResults,
+.chatList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  overflow-y: auto;
+}
+
+.userResults button,
+.chatList button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem;
+  border-radius: var(--border-radius-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chatList button.active,
+.userResults button:hover,
+.chatList button:hover {
+  background: var(--bg-secondary);
+}
+
+.chatList strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.chatList span {
+  display: block;
+  max-width: 210px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatAvatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--primary-hover);
+  font-weight: 700;
+}
+
+.chatPanel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.chatHeader {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chatHeader h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.chatHeader p {
+  font-size: 0.78rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.messagesList {
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.messageRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.messageRow.mine {
+  justify-content: flex-end;
+}
+
+.messageBubble {
+  max-width: min(75%, 34rem);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  padding: 0.65rem 0.75rem;
+  position: relative;
+}
+
+.messageRow.mine .messageBubble {
+  background: var(--primary);
+  color: white;
+}
+
+.messageRow.mine .messageBubble p {
+  color: white;
+}
+
+.messageBubble img,
+.messageBubble video,
+.composerImage img,
+.composerImage video {
+  display: block;
+  max-width: 260px;
+  max-height: 260px;
+  border-radius: var(--border-radius-sm);
+  margin-top: 0.35rem;
+  object-fit: cover;
+}
+
+.messageReply {
+  border-left: 2px solid currentColor;
+  opacity: 0.75;
+  padding-left: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.messageReplyBtn {
+  position: absolute;
+  right: 0.35rem;
+  bottom: -0.75rem;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatComposer {
+  position: relative;
+  border-top: 1px solid var(--border-light);
+  padding: 0.75rem;
+}
+
+.composerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.composerRow button,
+.composerRow label,
+.composerReply button,
+.composerImage button {
+  border: 0;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 0.55rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.composerRow textarea {
+  flex: 1;
+  min-height: 2.4rem;
+  max-height: 8rem;
+  resize: vertical;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  padding: 0.6rem 0.75rem;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-family: inherit;
+}
+
+.emojiPickerPanel {
+  margin-bottom: 0.75rem;
+}
+
+.emojiPickerPanel :global(.EmojiPickerReact) {
+  --epr-bg-color: var(--bg-primary);
+  --epr-category-label-bg-color: var(--bg-primary);
+  --epr-hover-bg-color: var(--bg-secondary);
+  --epr-search-border-color: var(--border-light);
+  --epr-search-input-bg-color: var(--bg-primary);
+  --epr-search-input-text-color: var(--text-primary);
+  --epr-text-color: var(--text-primary);
+  --epr-picker-border-color: var(--border-light);
+  width: 100% !important;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-light);
+  box-shadow: none;
+}
+
+.composerReply,
+.composerImage {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chatEmptyState,
+.emptyChat {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  text-align: center;
+  padding: 2rem;
+}
+
+.chatEmptyState h2 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.chatEmptyState p {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .chatPage {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chatSidebar,
+  .chatPanel {
+    min-height: 420px;
+  }
+}

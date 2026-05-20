@@ -1,0 +1,256 @@
+.settingsPage {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.settingsShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settingsPanel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.settingsSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.settingsSectionTitle h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.settingsAccountGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.settingsAvatarBlock,
+.settingsCardMinimal {
+  border: 1px solid var(--border-light);
+  border-radius: 0.9rem;
+  background: var(--bg-secondary);
+}
+
+.settingsAvatarBlock {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.settingsAvatarFrame {
+  width: 96px;
+  height: 96px;
+  flex: 0 0 auto;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-hover);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.settingsAvatarFrame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.settingsAvatarCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.settingsAvatarCopy strong {
+  font-size: 1.05rem;
+}
+
+.settingsAvatarCopy span,
+.settingsAvatarCopy small {
+  color: var(--text-secondary);
+}
+
+.settingsCardMinimal {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.settingsCardLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.settingsInlineStatus,
+.settingsInlineActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settingsInlineActions button {
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  color: white;
+  padding: 0.72rem 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font: inherit;
+}
+
+.settingsInlineActions button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.settingsInlineStatus {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.settingsToggleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.settingsToggleRow:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settingsToggleCopy {
+  min-width: 0;
+}
+
+.settingsToggleCopy strong {
+  display: flex;
+  align-items: center;
+  font-size: 0.96rem;
+}
+
+.settingsTextSizeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 1rem;
+}
+
+.settingsRowLabel {
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.settingsSegmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: var(--bg-secondary);
+}
+
+.settingsSegmented button {
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.settingsSegmented button.active {
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.settingsSwitch {
+  width: 3.2rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c8ccd2;
+  padding: 0.15rem;
+  position: relative;
+  cursor: pointer;
+}
+
+.settingsSwitch span {
+  display: block;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+}
+
+.settingsSwitchOn {
+  background: var(--primary) !important;
+}
+
+.settingsSwitchOn span {
+  transform: translateX(1.3rem) !important;
+}
+
+@media (max-width: 900px) {
+  .settingsPage {
+    padding: 1rem;
+  }
+
+  .settingsAccountGrid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .settingsToggleRow,
+  .settingsTextSizeRow {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .settingsSegmented {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .settingsAvatarBlock {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

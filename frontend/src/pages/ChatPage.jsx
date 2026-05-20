@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import { ImagePlus, MessageCircle, Reply, Search, Send, Smile } from 'lucide-react';
-import { api, getChatSocketUrl } from '../api/client';
+import { getChatSocketUrl } from '../api/client';
+import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import styles from './ChatPage.module.css';
 
 export default function ChatPage({ user }) {
   const [chats, setChats] = useState([]);
@@ -19,68 +21,30 @@ export default function ChatPage({ user }) {
   const composerRef = useRef(null);
 
   useEffect(() => { loadChats(); }, []);
-
-  useEffect(() => {
-    const ws = new WebSocket(getChatSocketUrl());
-    ws.onmessage = event => {
-      const payload = JSON.parse(event.data);
-      if (payload.type === 'chat:message') {
-        setChats(cur => bumpChat(cur, payload.message));
-        if (Number(payload.message.chat_id) === Number(activeChat?.id)) {
-          setMessages(cur => cur.some(m => m.id === payload.message.id) ? cur : [...cur, payload.message]);
-        }
-      }
-    };
-    return () => ws.close();
-  }, [activeChat?.id]);
-
-  useEffect(() => {
-    if (!activeChat?.id) return;
-    loadMessages(activeChat.id);
-  }, [activeChat?.id]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
-
-  useEffect(() => {
-    const timer = setTimeout(searchUsers, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  useEffect(() => {
-    if (!showEmojis) return undefined;
-
-    function handleClickOutside(event) {
-      if (composerRef.current && !composerRef.current.contains(event.target)) {
-        setShowEmojis(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showEmojis]);
+  useEffect(() => { if (activeChat?.id) loadMessages(activeChat.id); }, [activeChat?.id]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
+  useEffect(() => { const timer = setTimeout(() => searchUsers(), 300); return () => clearTimeout(timer); }, [query]);
 
   async function loadChats() {
-    const data = await api.get('/chat');
+    const data = await request('/chat');
     setChats(data);
     setActiveChat(prev => prev || data[0] || null);
   }
 
   async function loadMessages(chatId) {
-    const data = await api.get(`/chat/${chatId}/mensajes`);
+    const data = await request(`/chat/${chatId}/mensajes`);
     setMessages(data);
   }
 
   async function searchUsers() {
     if (query.trim().length < 2) { setUsers([]); return; }
-    const data = await api.get(`/chat/usuarios?q=${encodeURIComponent(query.trim())}`);
+    const data = await request(`/chat/usuarios?q=${encodeURIComponent(query.trim())}`);
     setUsers(data);
   }
 
   async function openChat(userId) {
-    const chat = await api.post('/chat', { userId });
-    const updated = await api.get('/chat');
+    const chat = await request('/chat', { method: 'POST', body: JSON.stringify({ userId }) });
+    const updated = await request('/chat');
     setChats(updated);
     setActiveChat(updated.find(item => Number(item.id) === Number(chat.id)) || chat);
     setQuery('');
@@ -91,9 +55,6 @@ export default function ChatPage({ user }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setImageData(String(reader.result));
-    reader.readAsDataURL(file);
   }
 
   async function sendMessage() {
@@ -103,11 +64,7 @@ export default function ChatPage({ user }) {
       const uploaded = await uploadToCloudinary(imageFile, 'walter/chat');
       mediaAssetId = uploaded.asset.id;
     }
-    const created = await api.post(`/chat/${activeChat.id}/mensajes`, {
-      contenido: text.trim() || null,
-      media_asset_id: mediaAssetId,
-      respuesta_a_id: replyTo?.id || null,
-    });
+    const created = await request(`/chat/${activeChat.id}/mensajes`, { method: 'POST', body: JSON.stringify({ contenido: text, media_asset_id: mediaAssetId, respuesta_a_id: replyTo?.id || null,}) });
     setMessages(cur => cur.some(m => m.id === created.id) ? cur : [...cur, created]);
     setText('');
     setImageData('');
@@ -122,15 +79,15 @@ export default function ChatPage({ user }) {
   }
 
   return (
-    <main className="chat-page">
-      <aside className="chat-sidebar">
-        <div className="chat-search">
+    <main className={styles.chatPage}>
+      <aside className={styles.chatSidebar}>
+        <div className={styles.chatSearch}>
           <Search size={16} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuarios..." />
         </div>
 
         {users.length > 0 && (
-          <div className="user-results">
+          <div className={styles.userResults}>
             {users.map(found => (
               <button key={found.id} onClick={() => openChat(found.id)}>
                 <Avatar name={found.username} />
@@ -140,11 +97,11 @@ export default function ChatPage({ user }) {
           </div>
         )}
 
-        <div className="chat-list">
+        <div className={styles.chatList}>
           {chats.length === 0 ? (
-            <div className="empty-chat"><MessageCircle size={24} /><span>Busca a alguien para empezar</span></div>
+            <div className={styles.emptyChat}><MessageCircle size={24} /><span>Busca a alguien para empezar</span></div>
           ) : chats.map(chat => (
-            <button key={chat.id} className={activeChat?.id === chat.id ? 'active' : ''} onClick={() => setActiveChat(chat)}>
+            <button key={chat.id} className={activeChat?.id === chat.id ? styles.active : ''} onClick={() => setActiveChat(chat)}>
               <Avatar name={chat.other_username} />
               <div>
                 <strong>w/{chat.other_username}</strong>
@@ -155,10 +112,10 @@ export default function ChatPage({ user }) {
         </div>
       </aside>
 
-      <section className="chat-panel">
+      <section className={styles.chatPanel}>
         {activeChat ? (
           <>
-            <header className="chat-header">
+            <header className={styles.chatHeader}>
               <Avatar name={activeChat.other_username} />
               <div>
                 <h2>w/{activeChat.other_username}</h2>
@@ -166,14 +123,14 @@ export default function ChatPage({ user }) {
               </div>
             </header>
 
-            <div className="messages-list">
+            <div className={styles.messagesList}>
               {messages.map(message => {
                 const mine = message.usuario_id === user.id;
                 return (
-                  <div key={message.id} className={`message-row ${mine ? 'mine' : ''}`}>
-                    <div className="message-bubble">
+                  <div key={message.id} className={`${styles.messageRow} ${mine ? styles.mine : ''}`}>
+                    <div className={styles.messageBubble}>
                       {message.respuesta_a_id && (
-                        <div className="message-reply">↳ w/{message.respuesta_username}: {message.respuesta_contenido || 'Imagen'}</div>
+                        <div className={styles.messageReply}>↳ w/{message.respuesta_username}: {message.respuesta_contenido || 'Imagen'}</div>
                       )}
                       {message.contenido && <p>{message.contenido}</p>}
                       {message.media_url && (
@@ -181,7 +138,7 @@ export default function ChatPage({ user }) {
                           ? <video src={message.media_url} controls />
                           : <img src={message.media_url} alt="Imagen del chat" />
                       )}
-                      <button className="message-reply-btn" onClick={() => setReplyTo(message)}><Reply size={14} /></button>
+                      <button className={styles.messageReplyBtn} onClick={() => setReplyTo(message)}><Reply size={14} /></button>
                     </div>
                   </div>
                 );
@@ -189,15 +146,15 @@ export default function ChatPage({ user }) {
               <div ref={bottomRef} />
             </div>
 
-            <footer className="chat-composer" ref={composerRef}>
+            <footer className={styles.chatComposer} ref={composerRef}>
               {replyTo && (
-                <div className="composer-reply">
+                <div className={styles.composerReply}>
                   Respondiendo a w/{replyTo.username}: {replyTo.contenido || 'Imagen'}
                   <button onClick={() => setReplyTo(null)}>×</button>
                 </div>
               )}
               {imageData && (
-                <div className="composer-image">
+                <div className={styles.composerImage}>
                   {imageFile?.type?.startsWith('video/')
                     ? <video src={imageData} controls />
                     : <img src={imageData} alt="Vista previa" />}
@@ -205,7 +162,7 @@ export default function ChatPage({ user }) {
                 </div>
               )}
               {showEmojis && (
-                <div className="emoji-picker-panel">
+                <div className={styles.emojiPickerPanel}>
                   <EmojiPicker
                     onEmojiClick={handleEmojiClick}
                     autoFocusSearch={false}
@@ -217,7 +174,7 @@ export default function ChatPage({ user }) {
                   />
                 </div>
               )}
-              <div className="composer-row">
+              <div className={styles.composerRow}>
                 <button type="button" onClick={() => setShowEmojis(v => !v)} aria-label="Abrir selector de emojis">
                   <Smile size={18} />
                 </button>
@@ -231,7 +188,7 @@ export default function ChatPage({ user }) {
             </footer>
           </>
         ) : (
-          <div className="chat-empty-state">
+          <div className={styles.chatEmptyState}>
             <MessageCircle size={36} />
             <h2>Tus mensajes</h2>
             <p>Busca un usuario y solicita escribirle un primer mensaje.</p>
@@ -243,7 +200,7 @@ export default function ChatPage({ user }) {
 }
 
 function Avatar({ name = '?' }) {
-  return <span className="chat-avatar">{name.slice(0, 2).toUpperCase()}</span>;
+  return <span className={styles.chatAvatar}>{name.slice(0, 2).toUpperCase()}</span>;
 }
 
 function bumpChat(chats, message) {

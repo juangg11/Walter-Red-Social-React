@@ -1,0 +1,279 @@
+.navbar {
+  background-color: var(--navbar-bg);
+  border-bottom: 1px solid var(--navbar-border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+.navbarContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 56px;
+  gap: 0;
+}
+
+.navLeft,
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navLeft {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.navRight {
+  justify-content: flex-end;
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  min-width: fit-content;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.navLogoMark {
+  display: block;
+  width: auto;
+  height: 42px;
+}
+
+.navSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--navbar-search-bg);
+  border: 1px solid var(--navbar-border);
+  border-radius: 20px;
+  padding: 0 12px;
+  width: 280px;
+  max-width: 280px;
+  height: 34px;
+  transition: all 0.2s;
+  margin-left: 15px;
+  flex-shrink: 0;
+}
+
+.navSearch input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  color: var(--navbar-text);
+  outline: none;
+}
+
+.navSearch input::placeholder {
+  color: var(--navbar-search-placeholder);
+}
+
+.navSearch svg {
+  color: var(--navbar-icon);
+  flex-shrink: 0;
+}
+
+.navSearch:focus-within {
+  border-color: var(--navbar-accent);
+}
+
+.navCenterIcons {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  pointer-events: none;
+}
+
+.navCenterIcons > * {
+  pointer-events: auto;
+}
+
+.navIconItem {
+  cursor: pointer;
+  color: inherit;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.navIconItemActive {
+  color: var(--navbar-accent) !important;
+  border-bottom-color: var(--navbar-indicator) !important;
+}
+
+.navCenterIcons svg,
+.navIcons svg {
+  width: 20px;
+  height: 20px;
+  color: var(--navbar-icon);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.navCenterIcons svg:hover,
+.navIcons svg:hover {
+  color: var(--primary-hover);
+}
+
+.profileMenu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border-light);
+}
+
+.profileLinkNav {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--navbar-text);
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.profileMenu button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--navbar-icon);
+  transition: color 0.2s;
+}
+
+.profileMenu button:hover {
+  color: var(--primary-hover);
+}
+
+.profileMenu button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navUserAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--primary-hover);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1.5px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  background-color: var(--primary-hover);
+  color: white;
+  border-radius: 50%;
+  width: 1.125rem;
+  height: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.notificationBellWrapper {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Panel de Notificaciones */
+.notificationsPanel {
+  position: fixed;
+  top: 5rem;
+  right: 1.25rem;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-md);
+  min-width: 18.75rem;
+  max-height: 25rem;
+  overflow-y: auto;
+  z-index: 10000;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--primary-hover);
+}
+
+.notificationsHeader {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.markAllReadBtn {
+  background: none;
+  border: none;
+  color: var(--primary-hover);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.notificationItem {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notificationItem:hover {
+  background-color: var(--bg-secondary);
+}
+
+.notificationTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.notificationMsg {
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+.noNotifications {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--secondary);
+  font-size: 0.75rem;
+}
