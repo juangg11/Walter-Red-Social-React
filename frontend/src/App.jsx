@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
@@ -22,45 +22,63 @@ const DEFAULT_SETTINGS = {
   },
 };
 
+function getInitialUser() {
+  const stored = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  return stored && token ? JSON.parse(stored) : null;
+}
+
+function getInitialSettings() {
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+
+  try {
+    const storedSettings = window.localStorage.getItem('walter-settings');
+    if (!storedSettings) {
+      return { ...DEFAULT_SETTINGS, theme: prefersDark ? 'dark' : 'light' };
+    }
+
+    const parsed = JSON.parse(storedSettings);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      notifications: { ...DEFAULT_SETTINGS.notifications, ...parsed.notifications },
+    };
+  } catch {
+    return { ...DEFAULT_SETTINGS, theme: prefersDark ? 'dark' : 'light' };
+  }
+}
+
+function getActiveTab(pathname) {
+  if (pathname.startsWith('/mensajes')) return 'messages';
+  if (pathname.startsWith('/comunidades')) return 'communities';
+  if (pathname.startsWith('/u/')) return 'profile';
+  if (pathname.startsWith('/settings')) return 'settings';
+  return 'feed';
+}
+
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getInitialUser);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [communities, setCommunities] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [activeTab, setActiveTab] = useState('feed');
-  const [loading, setLoading] = useState(true);
   const [chatToast, setChatToast] = useState(null);
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(getInitialSettings);
   const location = useLocation();
   const navigate = useNavigate();
+  const activeTab = getActiveTab(location.pathname);
+  const userId = user?.id;
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user');
-    const token  = localStorage.getItem('token');
-    if (stored && token) {
-      setUser(JSON.parse(stored));
-    }
+  async function loadCommunities() {
+    if (!userId) return;
     try {
-      const storedSettings = window.localStorage.getItem('walter-settings');
-      if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        setSettings({
-          ...DEFAULT_SETTINGS,
-          ...parsed,
-          notifications: { ...DEFAULT_SETTINGS.notifications, ...parsed.notifications },
-        });
-      } else {
-        const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-        setSettings(current => ({ ...current, theme: prefersDark ? 'dark' : 'light' }));
-      }
-    } catch {
-      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-      setSettings(current => ({ ...current, theme: prefersDark ? 'dark' : 'light' }));
+      const data = await request(`/comunidades?userId=${userId}`);
+      setCommunities(data);
+    } catch (e) {
+      console.error('Error loading communities:', e);
     }
-    setLoading(false);
-  }, []);
+  }
 
   useEffect(() => {
     document.body.dataset.theme = settings.theme;
@@ -73,10 +91,25 @@ function App() {
   }, [settings]);
 
   useEffect(() => {
-    if (!user) return;
-    loadCommunities();
-    loadNotificationCount();
-  }, [user]);
+    if (!userId) return undefined;
+    let ignore = false;
+
+    request(`/comunidades?userId=${userId}`)
+      .then(data => {
+        if (!ignore) setCommunities(data);
+      })
+      .catch(e => console.error('Error loading communities:', e));
+
+    request('/notificaciones/no-leidas')
+      .then(data => {
+        if (!ignore) setNotificationCount(data.total);
+      })
+      .catch(e => console.error('Error loading notifications:', e));
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -88,7 +121,7 @@ function App() {
       if (payload.type !== 'chat:message') return;
       if (payload.message.usuario_id === user.id) return;
 
-      setNotificationCount(notificationCount + 1);
+      setNotificationCount(current => current + 1);
       if (settings.notifications.chatToasts) {
         setChatToast({
           id: payload.message.id,
@@ -113,24 +146,6 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [chatToast]);
 
-  async function loadCommunities() {
-    try {
-      const data = await request(`/comunidades?userId=${user.id}`);
-      setCommunities(data);
-    } catch (e) {
-      console.error('Error loading communities:', e);
-    }
-  }
-
-  async function loadNotificationCount() {
-    try {
-      const data = await request('/notificaciones/no-leidas');
-      setNotificationCount(data.total);
-    } catch (e) {
-      console.error('Error loading notifications:', e);
-    }
-  }
-
   function handleLogin(userData) {
     setUser(userData);
   }
@@ -143,16 +158,7 @@ function App() {
     setNotificationCount(0);
   }
 
-  useEffect(() => {
-    if (location.pathname.startsWith('/mensajes')) setActiveTab('messages');
-    else if (location.pathname.startsWith('/comunidades')) setActiveTab('communities');
-    else if (location.pathname.startsWith('/u/')) setActiveTab('profile');
-    else if (location.pathname.startsWith('/settings')) setActiveTab('settings');
-    else setActiveTab('feed');
-  }, [location.pathname]);
-
   function handleTabChange(tab) {
-    setActiveTab(tab);
     if (tab === 'messages') navigate('/mensajes');
     else if (tab === 'communities') navigate('/comunidades');
     else if (tab === 'profile') navigate(`/u/${user.username}`);
@@ -169,7 +175,6 @@ function App() {
     localStorage.setItem('user', JSON.stringify(nextUser));
   }
 
-  if (loading) return null;
   if (!user) return <Auth onLogin={handleLogin} />;
 
   return (

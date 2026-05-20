@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import request from '../api/client';
 import styles from './Comunidades.module.css';
 
@@ -38,19 +38,35 @@ export default function Communities({ user, onCommunityCreated }) {
   const [mCat, setMCat] = useState('otro');
   const [mError, setMError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => { fetchCommunities(); }, []);
+  const userId = user.id;
 
   async function fetchCommunities() {
     setLoading(true);
     try {
-      const data = await request(`/comunidades?userId=${user.id}`);
+      const data = await request(`/comunidades?userId=${userId}`);
       setCommunities(data);
     } catch (e) {
       console.error('fetchCommunities:', e);
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    let ignore = false;
+
+    request(`/comunidades?userId=${userId}`)
+      .then(data => {
+        if (!ignore) setCommunities(data);
+      })
+      .catch(e => console.error('fetchCommunities:', e))
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
 
   async function handleJoin(comunidadId) {
     try {

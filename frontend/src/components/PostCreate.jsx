@@ -1,25 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import styles from './PostCreate.module.css';
 
-export default function PostCreate({ isOpen, onClose, user, communities, onPostCreated }) {
+export default function PostCreate({ isOpen, onClose, communities = [], onPostCreated }) {
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [selectedCommunity, setSelectedCommunity] = useState('');
   const [urlImagen, setUrlImagen] = useState('');
   const [urlVideo, setUrlVideo] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
-  const [mediaPreview, setMediaPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [availableCommunities, setAvailableCommunities] = useState(communities);
-  const memberCommunities = availableCommunities.filter(c => c.es_miembro);
-
-  useEffect(() => {
-    setAvailableCommunities(communities);
-  }, [communities]);
+  const memberCommunities = communities.filter(c => c.es_miembro);
 
   function reset() {
     setTitulo('');
@@ -28,7 +22,6 @@ export default function PostCreate({ isOpen, onClose, user, communities, onPostC
     setUrlImagen('');
     setUrlVideo('');
     setMediaFile(null);
-    setMediaPreview('');
     setError('');
   }
 

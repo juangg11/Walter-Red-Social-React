@@ -71,15 +71,12 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
   const [selectedPost, setSelectedPost] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [userVotes, setUserVotes] = useState({});
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  const userId = user.id;
 
   async function fetchPosts() {
     setLoading(true);
     try {
-      const data = await request(`/publicaciones?userId=${user.id}`);
+      const data = await request(`/publicaciones?userId=${userId}`);
       setPosts(data);
       const votesMap = {};
       data.forEach(p => { if (p.voto_usuario) votesMap[p.id] = p.voto_usuario; });
@@ -89,6 +86,27 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    let ignore = false;
+
+    request(`/publicaciones?userId=${userId}`)
+      .then(data => {
+        if (ignore) return;
+        setPosts(data);
+        const votesMap = {};
+        data.forEach(p => { if (p.voto_usuario) votesMap[p.id] = p.voto_usuario; });
+        setUserVotes(votesMap);
+      })
+      .catch(e => console.error('fetchPosts:', e))
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
 
   async function handleVote(postId, voteType) {
     const post = posts.find(p => p.id === postId);
@@ -108,7 +126,7 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
       const serverPost = result.post || { ...post, votos: result.votos, voto_usuario: result.voto };
       setPosts(cur => cur.map(p => p.id === postId ? serverPost : p));
       setUserVotes(cur => ({ ...cur, [postId]: result.voto }));
-    } catch (e) {
+    } catch {
       setPosts(cur => cur.map(p => p.id === postId ? { ...p, votos: post.votos } : p));
       setUserVotes(cur => ({ ...cur, [postId]: userVotes[postId] }));
     }

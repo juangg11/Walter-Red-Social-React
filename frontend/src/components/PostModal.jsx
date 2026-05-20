@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowBigUp, ArrowBigDown, Repeat2, X } from 'lucide-react';
 import request from '../api/client';
 import { computeVote } from '../utils/computeVote';
 import styles from './PostModal.module.css';
 
-export default function PostModal({ post, onClose, user, onCommentAdded, onPostUpdated, onAuthorClick = null, onShare = null }) {
+export default function PostModal({ post, onClose, onCommentAdded, onPostUpdated, onAuthorClick = null, onShare = null }) {
   const [postData, setPostData] = useState(post);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -14,19 +14,21 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
 
   useEffect(() => {
     if (!post?.id) return;
-    fetchComments();
-  }, []);
+    let ignore = false;
 
-  async function fetchComments() {
-    setLoading(true);
-    try {
-      const data = await request(`/comentarios?publicacion_id=${post.id}`);
-      setComments(data);
-    } catch (e) {
-      console.error('fetchComments:', e);
-    }
-    setLoading(false);
-  }
+    request(`/comentarios?publicacion_id=${post.id}`)
+      .then(data => {
+        if (!ignore) setComments(data);
+      })
+      .catch(e => console.error('fetchComments:', e))
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [post?.id]);
 
   async function handleVote(voteType) {
     const { nextVote, votes } = computeVote({
@@ -44,7 +46,7 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
       const result = await request(`/publicaciones/${post.id}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
       setPostData(result.post || updated);
       setUserVote(result.voto || nextVote);
-    } catch (e) {
+    } catch {
       setPostData(postData);
       setUserVote(userVote);
     }
@@ -55,13 +57,15 @@ export default function PostModal({ post, onClose, user, onCommentAdded, onPostU
     setSubmitting(true);
     try {
       const data = await request('/comentarios', { method: 'POST', body: JSON.stringify({ contenido: content, publicacion_id: post.id, comentario_padre_id: parentId }) });
-      setComments([...comments, data]);
+      setComments(current => [...current, data]);
       if (!parentId) setNewComment('');
       const count = (postData.numero_comentarios ?? 0) + 1;
       setPostData({ ...postData, numero_comentarios: count });
       onCommentAdded?.(count);
+      return data;
     } catch (e) {
       console.error('addComment:', e);
+      return null;
     } finally {
       setSubmitting(false);
     }

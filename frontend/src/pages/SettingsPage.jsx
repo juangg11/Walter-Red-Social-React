@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Bell, ImagePlus, Moon, Type, UserRound } from 'lucide-react';
 import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
@@ -6,14 +6,9 @@ import styles from './SettingsPage.module.css';
 
 export default function SettingsPage({ user, settings, onSettingsChange, onUserUpdate }) {
   const fileInputRef = useRef(null);
-  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || '');
   const [avatarStatus, setAvatarStatus] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState('');
-
-  useEffect(() => {
-    setAvatarUrl(user.avatar_url || '');
-  }, [user.avatar_url]);
 
   const memberSince = user.fecha_creacion ? new Date(user.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Sin fecha disponible';
 
@@ -31,7 +26,6 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
     try {
       const uploaded = await uploadToCloudinary(file, 'walter/avatars');
       const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ avatar_url: uploaded.asset.secure_url }) });
-      setAvatarUrl(updated.avatar_url || uploaded.asset.secure_url);
       onUserUpdate(updated);
       setAvatarStatus('Avatar actualizado.');
     } catch (error) {
@@ -80,7 +74,7 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
           <div className={styles.settingsAccountGrid}>
             <div className={styles.settingsAvatarBlock}>
               <div className={styles.settingsAvatarFrame}>
-                {avatarUrl ? <img src={avatarUrl} alt="Avatar" /> : <span>{user.username.slice(0, 2).toUpperCase()}</span>}
+                {user.avatar_url ? <img src={user.avatar_url} alt="Avatar" /> : <span>{user.username.slice(0, 2).toUpperCase()}</span>}
               </div>
               <div className={styles.settingsAvatarCopy}>
                 <strong>w/{user.username}</strong>

@@ -29,35 +29,38 @@ export default function UserPage({ user, onUserUpdate }) {
 
   useEffect(() => {
     if (!username) return;
-    loadProfilePage();
-  }, [username]);
+    let ignore = false;
 
-  async function loadProfilePage() {
-    setLoading(true);
-    try {
-      const [profileData, postsData, commentsData, sharedData] = await Promise.all([
+    Promise.all([
         request(`/usuarios/perfil/${username}`),
         request(`/usuarios/perfil/${username}/publicaciones`),
         request(`/usuarios/perfil/${username}/comentarios`),
         request(`/usuarios/perfil/${username}/compartidos`),
-      ]);
+      ])
+      .then(([profileData, postsData, commentsData, sharedData]) => {
+        if (ignore) return;
 
-      setProfile(profileData);
-      setPosts(postsData);
-      setComments(commentsData);
-      setSharedPosts(sharedData);
-      setBioDraft(profileData.bio || '');
+        setProfile(profileData);
+        setPosts(postsData);
+        setComments(commentsData);
+        setSharedPosts(sharedData);
+        setBioDraft(profileData.bio || '');
 
-      const voteMap = {};
-      [...postsData, ...sharedData].forEach(post => {
-        if (post?.voto_usuario) voteMap[post.id] = post.voto_usuario;
+        const voteMap = {};
+        [...postsData, ...sharedData].forEach(post => {
+          if (post?.voto_usuario) voteMap[post.id] = post.voto_usuario;
+        });
+        setUserVotes(voteMap);
+      })
+      .catch(e => console.error('loadProfilePage:', e))
+      .finally(() => {
+        if (!ignore) setLoading(false);
       });
-      setUserVotes(voteMap);
-    } catch (e) {
-      console.error('loadProfilePage:', e);
-    }
-    setLoading(false);
-  }
+
+    return () => {
+      ignore = true;
+    };
+  }, [username]);
 
   function updatePost(updatedPost) {
     setPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
@@ -75,11 +78,15 @@ export default function UserPage({ user, onUserUpdate }) {
     });
 
     updatePost({ ...post, votos: votes, voto_usuario: nextVote });
+    setUserVotes(cur => ({ ...cur, [postId]: nextVote }));
     try {
       const result = await request(`/publicaciones/${postId}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
-      updatePost(result.post || { ...post, votos: result.votos, voto_usuario: result.voto });
-    } catch (e) {
+      const updated = result.post || { ...post, votos: result.votos, voto_usuario: result.voto };
+      updatePost(updated);
+      setUserVotes(cur => ({ ...cur, [postId]: result.voto }));
+    } catch {
       updatePost(post);
+      setUserVotes(cur => ({ ...cur, [postId]: post.voto_usuario ?? null }));
     }
   }
 

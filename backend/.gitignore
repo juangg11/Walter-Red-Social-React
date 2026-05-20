@@ -1,4 +1,13 @@
 .env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+build/
+coverage/
+logs/
+*.log
 
 # Citrix ICA launch files
 *.ica

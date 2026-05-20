@@ -23,7 +23,22 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const socketsByUser = new Map();
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const envAllowedOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
+const devOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || devOriginPattern.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  }
+}));
 app.use(securityMiddleware);
 app.use(express.json());
 

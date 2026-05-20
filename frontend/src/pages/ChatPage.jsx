@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import { ImagePlus, MessageCircle, Reply, Search, Send, Smile } from 'lucide-react';
-import { getChatSocketUrl } from '../api/client';
 import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import styles from './ChatPage.module.css';
@@ -20,27 +19,53 @@ export default function ChatPage({ user }) {
   const bottomRef = useRef(null);
   const composerRef = useRef(null);
 
-  useEffect(() => { loadChats(); }, []);
-  useEffect(() => { if (activeChat?.id) loadMessages(activeChat.id); }, [activeChat?.id]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
-  useEffect(() => { const timer = setTimeout(() => searchUsers(), 300); return () => clearTimeout(timer); }, [query]);
-
   async function loadChats() {
     const data = await request('/chat');
     setChats(data);
     setActiveChat(prev => prev || data[0] || null);
   }
 
-  async function loadMessages(chatId) {
-    const data = await request(`/chat/${chatId}/mensajes`);
-    setMessages(data);
-  }
+  useEffect(() => {
+    let ignore = false;
 
-  async function searchUsers() {
-    if (query.trim().length < 2) { setUsers([]); return; }
-    const data = await request(`/chat/usuarios?q=${encodeURIComponent(query.trim())}`);
-    setUsers(data);
-  }
+    request('/chat')
+      .then(data => {
+        if (ignore) return;
+        setChats(data);
+        setActiveChat(prev => prev || data[0] || null);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeChat?.id) return undefined;
+    let ignore = false;
+
+    request(`/chat/${activeChat.id}/mensajes`)
+      .then(data => {
+        if (!ignore) setMessages(data);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeChat?.id]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.trim().length < 2) {
+        setUsers([]);
+        return;
+      }
+
+      request(`/chat/usuarios?q=${encodeURIComponent(query.trim())}`)
+        .then(data => setUsers(data));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   async function openChat(userId) {
     const chat = await request('/chat', { method: 'POST', body: JSON.stringify({ userId }) });
@@ -201,12 +226,4 @@ export default function ChatPage({ user }) {
 
 function Avatar({ name = '?' }) {
   return <span className={styles.chatAvatar}>{name.slice(0, 2).toUpperCase()}</span>;
-}
-
-function bumpChat(chats, message) {
-  return chats.map(chat => (
-    Number(chat.id) === Number(message.chat_id)
-      ? { ...chat, ultimo_mensaje: message.contenido, ultima_imagen: message.media_url, ultimo_mensaje_fecha: message.fecha_creacion }
-      : chat
-  ));
 }
