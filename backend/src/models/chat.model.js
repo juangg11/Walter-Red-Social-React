@@ -172,7 +172,7 @@ export const ChatModel = {
       }
     }
 
-    await pool.query('UPDATE chats SET estado = "activo", fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?', [chatId]);
+    await pool.query('UPDATE chats SET estado = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?', ['activo', chatId]);
     try {
       const [rows] = await pool.query(`${MESSAGE_SELECT} WHERE m.id = ?`, [result.insertId]);
       return rows[0];
