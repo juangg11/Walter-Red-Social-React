@@ -162,21 +162,23 @@ export default function ChatPage({ user }) {
           </div>
         )}
 
-        <div className={styles.chatList}>
-          {chats.length === 0 ? (
-            <div className={styles.emptyChat}><span>Busca a alguien para empezar</span></div>
-          ) : chats.map(chat => (
-            <button key={chat.id} className={activeChat?.id === chat.id ? styles.active : ''} onClick={() => setActiveChat(chat)}>
-              <div className={styles.avatarSmall}>
-                <span>{String(chat.other_username).slice(0, 2).toUpperCase()}</span>
-              </div>
-              <div>
-                <strong>{chat.other_username}</strong>
-                <span>{chat.ultimo_mensaje || (chat.ultima_imagen ? 'Imagen' : 'Sin mensajes aún')}</span>
-              </div>
-            </button>
-          ))}
-        </div>
+        {users.length === 0 && (
+          <div className={styles.chatList}>
+            {chats.length === 0 ? (
+              <div className={styles.emptyChat}><span>Busca a alguien para empezar</span></div>
+            ) : chats.map(chat => (
+              <button key={chat.id} className={activeChat?.id === chat.id ? styles.active : ''} onClick={() => setActiveChat(chat)}>
+                <div className={styles.avatarSmall}>
+                  <span>{String(chat.other_username).slice(0, 2).toUpperCase()}</span>
+                </div>
+                <div>
+                  <strong>{chat.other_username}</strong>
+                  <span>{chat.ultimo_mensaje || (chat.ultima_imagen ? 'Imagen' : 'Sin mensajes aún')}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </aside>
 
       <section className={styles.chatPanel}>
