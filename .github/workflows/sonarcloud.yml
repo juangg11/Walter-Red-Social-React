@@ -19,10 +19,6 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
-        with:
-          args: >
-            -Dsonar.projectKey=juangg11_Walter-Red-Social
-            -Dsonar.organization=juangg11
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
