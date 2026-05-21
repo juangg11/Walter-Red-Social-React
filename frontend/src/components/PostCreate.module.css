@@ -99,6 +99,8 @@
   border-radius: 12px;
   padding: 12px;
   background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
 }
 
 .fileInputHidden {
@@ -118,6 +120,11 @@
   cursor: pointer;
   background: transparent;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.mediaPickerBtn svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .mediaPickerBtn:hover {
