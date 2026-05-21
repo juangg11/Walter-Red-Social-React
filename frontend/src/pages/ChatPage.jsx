@@ -153,7 +153,13 @@ export default function ChatPage({ user }) {
           <div className={styles.userResults}>
             {users.map(found => (
               <button key={found.id} onClick={() => openChat(found.id)}>
-                <Avatar name={found.username} />
+                <div className={styles.avatarSmall}>
+                  {found.avatar_url ? (
+                    <img src={found.avatar_url} alt={found.username} />
+                  ) : (
+                    <span>{found.username.slice(0, 2).toUpperCase()}</span>
+                  )}
+                </div>
                 <span>w/{found.username}</span>
               </button>
             ))}
@@ -165,7 +171,13 @@ export default function ChatPage({ user }) {
             <div className={styles.emptyChat}><span>Busca a alguien para empezar</span></div>
           ) : chats.map(chat => (
             <button key={chat.id} className={activeChat?.id === chat.id ? styles.active : ''} onClick={() => setActiveChat(chat)}>
-              <Avatar name={chat.other_username} />
+              <div className={styles.avatarSmall}>
+                {chat.other_username_avatar_url ? (
+                  <img src={chat.other_username_avatar_url} alt={chat.other_username} />
+                ) : (
+                  <span>{String(chat.other_username).slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
               <div>
                 <strong>w/{chat.other_username}</strong>
                 <span>{chat.ultimo_mensaje || (chat.ultima_imagen ? 'Imagen' : 'Sin mensajes aún')}</span>
@@ -179,7 +191,13 @@ export default function ChatPage({ user }) {
         {activeChat ? (
           <>
             <header className={styles.chatHeader}>
-              <Avatar name={{ avatar_url: activeChat.other_username?.avatar_url, username: activeChat.other_username?.username }} />
+              <div className={styles.chatHeaderAvatar}>
+                {activeChat.other_username?.avatar_url ? (
+                  <img src={activeChat.other_username.avatar_url} alt={activeChat.other_username} />
+                ) : (
+                  <span>{String(activeChat.other_username).slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
               <div>
                 <h2>w/{activeChat.other_username}</h2>
               </div>
@@ -259,8 +277,4 @@ export default function ChatPage({ user }) {
       </section>
     </main>
   );
-}
-
-function Avatar({ name = '?' }) {
-  return <span className={styles.chatAvatar}>{name.slice(0, 2).toUpperCase()}</span>;
 }
