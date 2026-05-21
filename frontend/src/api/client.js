@@ -1,6 +1,14 @@
 const URL = import.meta.env.VITE_API_URL;
 const WS_URL = import.meta.env.VITE_WS_URL;
 
+// Definir hosts permitidos de forma estricta
+const ALLOWED_WS_HOSTS = [
+  'localhost',
+  'localhost:3001',
+  '127.0.0.1',
+  '127.0.0.1:3001',
+];
+
 function getToken() {
   return localStorage.getItem('token');
 }
@@ -39,7 +47,7 @@ export default async function request(path, options = {}) {
 }
 
 export function getChatSocketUrl() {
-  const token = localStorage.getItem('token') || '';
+  const token = getToken() || '';
   const configured = (WS_URL || '').trim();
   let base = configured;
 
@@ -57,17 +65,24 @@ export function getChatSocketUrl() {
 
   try {
     const url = new URL(base, window.location.origin);
-    const allowedHosts = ['localhost', 'localhost:3001', window.location.hostname];
-    const isAllowed = allowedHosts.some(host => 
-      url.hostname === host || url.host === host
-    );
+    const host = url.host;
+    const hostname = url.hostname;
+    
+    const isAllowed = ALLOWED_WS_HOSTS.includes(host) || 
+                      ALLOWED_WS_HOSTS.includes(hostname) ||
+                      (hostname === window.location.hostname && window.location.hostname !== '');
 
     if (!isAllowed) {
-      console.error('WebSocket URL not in allowlist:', base);
+      console.error('WebSocket host not in allowlist:', host);
       return null;
     }
-  } catch {
-    console.error('Invalid WebSocket URL:', base);
+
+    if (!['ws:', 'wss:'].includes(url.protocol)) {
+      console.error('Invalid WebSocket protocol:', url.protocol);
+      return null;
+    }
+  } catch (e) {
+    console.error('Invalid WebSocket URL:', base, e);
     return null;
   }
 

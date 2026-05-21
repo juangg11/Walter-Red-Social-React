@@ -186,8 +186,26 @@ function App() {
   }
 
   function handleUserUpdate(nextUser) {
-    setUser(nextUser);
-    localStorage.setItem('user', JSON.stringify(nextUser));
+    if (!nextUser || typeof nextUser !== 'object') return;
+    const sanitizedUser = { ...nextUser };
+
+    if (sanitizedUser.nombre) {
+      sanitizedUser.nombre = String(sanitizedUser.nombre).trim();
+    }
+
+    if (sanitizedUser.avatar_url) {
+      const urlStr = String(sanitizedUser.avatar_url).trim();
+      
+      if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
+        sanitizedUser.avatar_url = urlStr;
+      } else {
+        sanitizedUser.avatar_url = '';
+      }
+    }
+
+    setUser(sanitizedUser);
+
+    localStorage.setItem('user', JSON.stringify(sanitizedUser));
   }
 
   if (!user) return <Auth onLogin={handleLogin} />;
