@@ -13,9 +13,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Create sonar-project.properties
+        run: |
+          echo "sonar.projectKey=juangg11_Walter-Red-Social" > sonar-project.properties
+          echo "sonar.organization=juangg11" >> sonar-project.properties
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: "-Dsonar.projectKey=juangg11_Walter-Red-Social -Dsonar.organization=juangg11"
