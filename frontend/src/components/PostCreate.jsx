@@ -77,7 +77,7 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
               <option value="">Selecciona una comunidad</option>
               {memberCommunities.length > 0 ? (
                 memberCommunities.map((c) => (
-                  <option key={c.id} value={String(c.id)}>{c.nombre}</option>
+                  <option key={c.id} value={String(c.id)}>w/{c.nombre}</option>
                 ))
               ) : (
                 <option disabled>No perteneces a ninguna comunidad</option>
