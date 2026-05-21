@@ -39,7 +39,7 @@ export const ChatModel = {
   },
 
   async createDirectChat(createdBy, otherUserId) {
-    const [result] = await pool.query('INSERT INTO chats (creado_por, estado) VALUES (?, ?)', [createdBy, 'pendiente']);
+    const [result] = await pool.query('INSERT INTO chats (creado_por) VALUES (?)', [createdBy]);
     await pool.query('INSERT INTO chats_participantes (chat_id, usuario_id) VALUES (?, ?), (?, ?)', [
       result.insertId,
       createdBy,
@@ -63,7 +63,7 @@ export const ChatModel = {
   async listForUser(userId) {
     try {
       const [rows] = await pool.query(
-        `SELECT c.id, c.estado, c.creado_por, c.fecha_actualizacion,
+        `SELECT c.id, c.creado_por, c.fecha_actualizacion,
           other_user.id AS other_user_id,
           other_user.username AS other_username,
           other_user.avatar_url AS other_avatar_url,
@@ -85,7 +85,7 @@ export const ChatModel = {
     } catch (error) {
       if (!isLegacySchemaError(error)) throw error;
       const [rows] = await pool.query(
-        `SELECT c.id, c.estado, c.creado_por, c.fecha_actualizacion,
+        `SELECT c.id, c.creado_por, c.fecha_actualizacion,
           other_user.id AS other_user_id,
           other_user.username AS other_username,
           other_user.avatar_url AS other_avatar_url,
@@ -172,7 +172,7 @@ export const ChatModel = {
       }
     }
 
-    await pool.query('UPDATE chats SET estado = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?', ['activo', chatId]);
+    await pool.query('UPDATE chats SET fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = ?', [chatId]);
     try {
       const [rows] = await pool.query(`${MESSAGE_SELECT} WHERE m.id = ?`, [result.insertId]);
       return rows[0];

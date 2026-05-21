@@ -182,7 +182,6 @@ export default function ChatPage({ user }) {
               <Avatar name={activeChat.other_username} />
               <div>
                 <h2>w/{activeChat.other_username}</h2>
-                <p>{activeChat.estado === 'pendiente' ? 'Solicitud de primer mensaje' : 'Chat activo'}</p>
               </div>
             </header>
 
