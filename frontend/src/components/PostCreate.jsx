@@ -123,7 +123,7 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
             />
             <label htmlFor="post-media-file" className={styles.mediaPickerBtn}>
               <ImagePlus size={18} />
-              <span>{mediaFile ? 'Cambiar archivo' : ' Subir foto o video'}</span>
+              <span>{mediaFile ? 'Cambiar archivo' : 'Subir foto o video'}</span>
             </label>
             {mediaFile ? (
               <div className={styles.selectedMediaPill}>

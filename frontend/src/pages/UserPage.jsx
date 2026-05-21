@@ -26,6 +26,7 @@ export default function UserPage({ user, onUserUpdate }) {
   const [bioDraft, setBioDraft] = useState('');
   const [savingBio, setSavingBio] = useState(false);
   const [userVotes, setUserVotes] = useState({});
+  const [editingBio, setEditingBio] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -123,11 +124,12 @@ export default function UserPage({ user, onUserUpdate }) {
       const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ bio: bioDraft }) });
       onUserUpdate?.(updated);
       setProfile(cur => cur ? { ...cur, bio: updated.bio } : cur);
+      setEditingBio(false);
     } catch (e) {
       console.error('saveBio:', e);
     }
     setSavingBio(false);
-  }
+}
 
   async function openPost(postId) {
     try {
@@ -148,7 +150,7 @@ export default function UserPage({ user, onUserUpdate }) {
 
   const joinedDate = profile.fecha_creacion
     ? new Date(profile.fecha_creacion).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-    : 'Sin fecha';
+    : 'Fecha no disponible';
 
   return (
     <main className={styles.profilePage}>
@@ -166,12 +168,32 @@ export default function UserPage({ user, onUserUpdate }) {
                   <h1>w/{profile.username}</h1>
                   <span>{profile.email}</span>
                 </div>
-                {!profile.is_me && (
-                  <button type="button" className={styles.profileFollowBtn} onClick={handleFollow}>
-                    {profile.is_following ? <UserRoundCheck size={16} /> : <UserPlus size={16} />}
-                    <span>{profile.is_following ? 'Siguiendo' : 'Seguir'}</span>
-                  </button>
-                )}
+                  {profile.is_me && (
+                    <div className={styles.profileBioEditor}>
+                      {editingBio ? (
+                        <>
+                          <textarea
+                            value={bioDraft}
+                            onChange={e => setBioDraft(e.target.value)}
+                            maxLength={280}
+                            placeholder="Biografía"
+                          />
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button type="button" onClick={() => setEditingBio(false)}>
+                              Cancelar
+                            </button>
+                            <button type="button" onClick={handleSaveBio} disabled={savingBio}>
+                              {savingBio ? 'Guardando...' : 'Guardar'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => setEditingBio(true)}>
+                          Editar biografía
+                        </button>
+                      )}
+                    </div>
+                  )}
               </div>
 
               <div className={styles.profileStats}>
@@ -249,11 +271,11 @@ export default function UserPage({ user, onUserUpdate }) {
           <aside className={styles.profileSide}>
             <section className={styles.profilePanel}>
               <h3>Sobre w/{profile.username}</h3>
-              <p className={styles.profileAboutText}>{profile.bio || 'Sin biografía todavía.'}</p>
               <div className={styles.profileCreatedRow}>
                 <CalendarDays size={16} />
                 <span>{joinedDate}</span>
               </div>
+              <p className={styles.profileAboutText}>{profile.bio || 'Sin biografía todavía.'}</p>
               {profile.is_me && (
                 <div className={styles.profileBioEditor}>
                   <textarea value={bioDraft} onChange={event => setBioDraft(event.target.value)} maxLength={280} placeholder="Biografía" />
