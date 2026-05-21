@@ -108,7 +108,7 @@
 }
 
 .mediaPickerBtn {
-  display: inline-flex;
+  display: inline-flex !important;  /* Esto hace que el .formField label lo sobreescriba */
   align-items: center;
   gap: 8px;
   line-height: normal;
