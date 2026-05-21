@@ -54,5 +54,22 @@ export function getChatSocketUrl() {
   }
 
   if (!base) return null;
+
+  try {
+    const url = new URL(base, window.location.origin);
+    const allowedHosts = ['localhost', 'localhost:3001', window.location.hostname];
+    const isAllowed = allowedHosts.some(host => 
+      url.hostname === host || url.host === host
+    );
+
+    if (!isAllowed) {
+      console.error('WebSocket URL not in allowlist:', base);
+      return null;
+    }
+  } catch {
+    console.error('Invalid WebSocket URL:', base);
+    return null;
+  }
+
   return `${base}?token=${encodeURIComponent(token)}`;
 }
