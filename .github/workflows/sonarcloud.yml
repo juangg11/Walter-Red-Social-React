@@ -16,14 +16,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install sonar-scanner
-        run: |
-          npm install -g sonarqube-scanner
-
-      - name: Run SonarCloud scan
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=juangg11_Walter-Red-Social \
-            -Dsonar.organization=juangg11 \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
