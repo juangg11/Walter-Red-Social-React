@@ -26,4 +26,4 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=juangg11_Walter-Red-Social
-            -Dsonar.organization=juan-dev
+            -Dsonar.organization=juangg11
