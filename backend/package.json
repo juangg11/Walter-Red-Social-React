@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage --all",
     "dev": "nodemon --ignore schema.sql src/index.js",
     "start": "node src/index.js",
     "db:migrate": "node scripts/migrate.js",
@@ -30,6 +32,9 @@
     "ws": "^8.20.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@testing-library/jest-dom": "^6.1.5",
+    "@vitest/coverage-v8": "^1.0.4",
+    "nodemon": "^3.1.14",
+    "vitest": "^1.0.4"
   }
 }
