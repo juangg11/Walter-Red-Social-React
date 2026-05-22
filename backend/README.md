@@ -11,22 +11,6 @@ npm run db:seed
 npm run db:upgrade
 ```
 
-## Variables de entorno
-
-```env
-DB_HOST=127.0.0.1
-DB_PORT=3308
-DB_USER=walter
-DB_PASSWORD=walter1234
-DB_NAME=walter
-JWT_SECRET=cambia_este_secreto
-PORT=3000
-CLIENT_URL=http://localhost:5173,http://127.0.0.1:5173,https://walter-red-social.vercel.app
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-```
-
 ## Cloudinary
 
 El backend firma subidas y registra assets en la tabla `media_assets`.
@@ -55,6 +39,6 @@ Flujo:
 
 ## Notas
 
-- La autenticación es JWT propia, no Supabase.
+- La autenticación es JWT propia.
 - La base de datos actual es MySQL.
 - Los assets multimedia se suben a Cloudinary y se guardan en `media_assets`.
