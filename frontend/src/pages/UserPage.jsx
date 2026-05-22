@@ -121,14 +121,20 @@ export default function UserPage({ user, onUserUpdate }) {
   async function handleSaveBio() {
     setSavingBio(true);
     try {
-      const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ bio: bioDraft }) });
+      const updated = await request('/usuarios/perfil', { 
+        method: 'PATCH', 
+        body: JSON.stringify({ bio: bioDraft }) 
+      });
+
       onUserUpdate?.(updated);
+
       setProfile(cur => cur ? { ...cur, bio: updated.bio } : cur);
       setEditingBio(false);
     } catch (e) {
-      console.error('saveBio:', e);
+      console.error('Error al guardar la bio:', e);
+    } finally {
+      setSavingBio(false);
     }
-    setSavingBio(false);
   }
 
   async function openPost(postId) {

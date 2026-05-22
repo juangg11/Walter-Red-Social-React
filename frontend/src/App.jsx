@@ -118,7 +118,6 @@ function App() {
     if (!rawWsUrl) return undefined;
 
     const wsUrlStr = String(rawWsUrl).trim();
-
     const safeWsPattern = /^wss?:\/\/[a-zA-Z0-9.\-_:]+(\/.*)?$/;
 
     if (!safeWsPattern.test(wsUrlStr)) {
@@ -170,8 +169,32 @@ function App() {
     return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
   }, [navigate]);
 
+  function sanitizeUserObject(userObj) {
+    if (!userObj) return null;
+    
+    const sanitizeString = (str) => {
+      if (typeof str !== 'string') return str;
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+    };
+
+    return {
+      ...userObj,
+      username: sanitizeString(userObj.username),
+      bio: sanitizeString(userObj.bio),
+      avatar_url: sanitizeString(userObj.avatar_url),
+    };
+  }
+
   function handleLogin(userData) {
-    setUser(userData);
+    if (!userData) return;
+    const sanitizedUser = sanitizeUserObject(userData);
+    setUser(sanitizedUser);
+    localStorage.setItem('user', JSON.stringify(sanitizedUser));
   }
 
   function handleLogout() {
@@ -194,24 +217,9 @@ function App() {
     setSettings(nextSettings);
   }
 
-  function handleUserUpdate(nextUser) {
-    if (!nextUser || typeof nextUser !== 'object') return;
-    const sanitizedUser = { ...nextUser };
-
-    if (sanitizedUser.nombre) {
-      sanitizedUser.nombre = String(sanitizedUser.nombre).trim();
-    }
-
-    if (sanitizedUser.avatar_url) {
-      const urlStr = String(sanitizedUser.avatar_url).trim();
-      
-      if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
-        sanitizedUser.avatar_url = urlStr;
-      } else {
-        sanitizedUser.avatar_url = '';
-      }
-    }
-
+  function handleUserUpdate(updatedUser) {
+    if (!updatedUser) return;
+    const sanitizedUser = sanitizeUserObject(updatedUser);
     setUser(sanitizedUser);
     localStorage.setItem('user', JSON.stringify(sanitizedUser));
   }
