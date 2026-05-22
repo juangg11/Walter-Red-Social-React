@@ -114,10 +114,19 @@ function App() {
   useEffect(() => {
     if (!user) return undefined;
 
-    const wsUrl = getChatSocketUrl();
-    if (!wsUrl) return undefined;
+    const rawWsUrl = getChatSocketUrl();
+    if (!rawWsUrl) return undefined;
 
-    const ws = new WebSocket(wsUrl);
+    const wsUrlStr = String(rawWsUrl).trim();
+
+    const safeWsPattern = /^wss?:\/\/[a-zA-Z0-9.\-_:]+(\/.*)?$/;
+
+    if (!safeWsPattern.test(wsUrlStr)) {
+      console.error('Conexión de WebSocket bloqueada: URL con formato malicioso.');
+      return undefined;
+    }
+
+    const ws = new WebSocket(wsUrlStr);
 
     ws.onmessage = event => {
       const payload = JSON.parse(event.data);
@@ -204,7 +213,6 @@ function App() {
     }
 
     setUser(sanitizedUser);
-
     localStorage.setItem('user', JSON.stringify(sanitizedUser));
   }
 

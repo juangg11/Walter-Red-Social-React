@@ -10,7 +10,16 @@ const ALLOWED_WS_HOSTS = [
 ];
 
 function getToken() {
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  const jwtPattern = /^[a-zA-Z0-9-_=]+\.[a-zA-Z0-9-_=]+\.[a-zA-Z0-9-_=]+$/;
+
+  if (!jwtPattern.test(token)) {
+    console.warn('Token con formato sospechoso.');
+    return null;
+  }
+
+  return token;
 }
 
 export default async function request(path, options = {}) {
