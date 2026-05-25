@@ -7,6 +7,7 @@ const ALLOWED_WS_HOSTS = [
   'localhost:3001',
   '127.0.0.1',
   '127.0.0.1:3001',
+  'walter-red-social.onrender.com',
 ];
 
 function getToken() {
@@ -86,9 +87,10 @@ export function getChatSocketUrl() {
     const host = url.host;
     const hostname = url.hostname;
     
-    const isAllowed = ALLOWED_WS_HOSTS.includes(host) || 
-                      ALLOWED_WS_HOSTS.includes(hostname) ||
-                      (hostname === window.location.hostname && window.location.hostname !== '');
+    // Permitir localhost/127.0.0.1, dominios configurados, o el dominio actual si es HTTPS en producción
+    const isLocalhost = ALLOWED_WS_HOSTS.includes(host) || ALLOWED_WS_HOSTS.includes(hostname);
+    const isCurrentDomain = hostname === window.location.hostname && window.location.hostname !== '' && window.location.protocol === 'https:';
+    const isAllowed = isLocalhost || isCurrentDomain;
 
     if (!isAllowed) {
       console.error('WebSocket host not in allowlist:', host);
