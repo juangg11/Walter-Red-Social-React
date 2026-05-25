@@ -112,7 +112,7 @@ function App() {
   }, [userId]);
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!userId) return undefined;
 
     const rawWsUrl = getChatSocketUrl();
     if (!rawWsUrl) return undefined;
@@ -125,12 +125,18 @@ function App() {
       return undefined;
     }
 
-    const ws = new WebSocket(wsUrlStr);
+    let ws;
+    try {
+      ws = new WebSocket(wsUrlStr);
+    } catch (e) {
+      console.error('WebSocket no disponible:', e);
+      return undefined;
+    }
 
     ws.onmessage = event => {
       const payload = JSON.parse(event.data);
       if (payload.type !== 'chat:message') return;
-      if (payload.message.usuario_id === user.id) return;
+      if (payload.message.usuario_id === userId) return;
 
       setNotificationCount(current => current + 1);
       if (settings.notifications.chatToasts) {
@@ -150,8 +156,8 @@ function App() {
 
     ws.onerror = () => {};
 
-    return () => ws.close();
-  }, [user, settings.notifications.chatToasts, settings.notifications.desktopMessages]);
+    return () => ws?.close();
+  }, [userId, settings.notifications.chatToasts, settings.notifications.desktopMessages]);
 
   useEffect(() => {
     if (!chatToast) return undefined;
