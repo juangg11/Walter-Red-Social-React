@@ -87,7 +87,6 @@ export function getChatSocketUrl() {
     const host = url.host;
     const hostname = url.hostname;
     
-    // Permitir localhost/127.0.0.1, dominios configurados, o el dominio actual si es HTTPS en producción
     const isLocalhost = ALLOWED_WS_HOSTS.includes(host) || ALLOWED_WS_HOSTS.includes(hostname);
     const isCurrentDomain = hostname === window.location.hostname && window.location.hostname !== '' && window.location.protocol === 'https:';
     const isAllowed = isLocalhost || isCurrentDomain;

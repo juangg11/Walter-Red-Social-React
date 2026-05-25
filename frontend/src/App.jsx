@@ -118,7 +118,7 @@ function App() {
     if (!rawWsUrl) return undefined;
 
     const wsUrlStr = String(rawWsUrl).trim();
-    const safeWsPattern = /^wss?:\/\/[a-zA-Z0-9.\-_:]+(\/.*)?$/;
+    const safeWsPattern = /^wss?:\/\/[a-zA-Z0-9.\-_:]+(\/[a-zA-Z0-9.\-_/?=&]*)?$/;
 
     if (!safeWsPattern.test(wsUrlStr)) {
       console.error('Conexión de WebSocket bloqueada: URL con formato malicioso.');
