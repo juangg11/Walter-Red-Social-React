@@ -28,6 +28,7 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
     setUsernameStatus('');
     try {
       const updated = await request('/usuarios/perfil', { method: 'PATCH', body: JSON.stringify({ username: trimmed }) });
+      console.log('respuesta del backend:', updated);
       onUserUpdate(updated);
       setEditingUsername(false);
       setUsernameStatus('Nombre actualizado.');
