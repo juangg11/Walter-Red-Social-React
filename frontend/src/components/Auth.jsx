@@ -19,7 +19,6 @@ export default function Auth({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const data = await request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
       localStorage.setItem('token', data.token);
@@ -35,7 +34,6 @@ export default function Auth({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const data = await request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, username }) });
       localStorage.setItem('token', data.token);
@@ -60,82 +58,66 @@ export default function Auth({ onLogin }) {
 
   return (
     <div className={styles.landingPage}>
-      {/* Luces cinéticas de fondo */}
       <div className={styles.auroraGlow1}></div>
       <div className={styles.auroraGlow2}></div>
 
-      {/* Contenedor Grid Principal */}
       <main className={styles.mainContent}>
         <div className={styles.heroGrid}>
-          
-          {/* COLUMNA IZQUIERDA: Textos y Acciones */}
           <div className={styles.heroLeft}>
             <h1 className={styles.mainTitle}>Encuentra tu comunidad.</h1>
             <p className={styles.tagline}>
               Únete a <span className={styles.brandText}>Walter</span>, el espacio descentralizado donde las ideas fluyen libres, los hilos cobran vida y tus intereses encuentran su hogar definitivo.
             </p>
-
             <div className={styles.actionButtons}>
-              <button 
-                className={styles.primaryActionBtn} 
-                onClick={() => openAuthModal(true)}
-              >
+              <button className={styles.primaryActionBtn} onClick={() => openAuthModal(true)}>
                 Comenzar ahora
                 <ArrowRight size={18} className={styles.arrowIcon} />
               </button>
-              <button 
-                className={styles.secondaryActionBtn} 
-                onClick={() => openAuthModal(false)}
-              >
+              <button className={styles.secondaryActionBtn} onClick={() => openAuthModal(false)}>
                 Iniciar sesión
               </button>
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: La "W" Gigante Animada en un único sentido */}
           <div className={styles.heroRight}>
             <div className={styles.giantLogoContainer}>
               <span className={styles.textLogoMark}>W</span>
             </div>
           </div>
-
         </div>
       </main>
 
-      {/* Panel informativo inferior desplegable */}
-      {activeFooterTab && (
-        <div className={styles.infoDrawer}>
-          <div className={styles.infoDrawerContent}>
-            <button className={styles.closeDrawerBtn} onClick={() => setActiveFooterTab(null)}>
-              <X size={16} />
-            </button>
-            {activeFooterTab === 'ayuda' && (
-              <>
-                <h4>Centro de Ayuda y Soporte</h4>
-                <p>¿Tienes problemas para acceder? Asegúrate de que tus credenciales coincidan con las registradas. Si experimentas comportamientos inesperados, limpia la caché de tu navegador o contacta con la administración.</p>
-              </>
-            )}
-            {activeFooterTab === 'contacto' && (
-              <>
-                <h4>Contacto de Prensa y Soporte</h4>
-                <p>¿Quieres reportar un bug o hacernos una propuesta? Escríbenos directamente a <span className={styles.highlightText}>support@walter.network</span> o búscanos en los canales comunitarios oficiales.</p>
-              </>
-            )}
-          </div>
+      {/* Panel informativo — siempre en el DOM, abre/cierra con CSS */}
+      <div className={`${styles.infoDrawer} ${activeFooterTab ? styles.infoDrawerOpen : ''}`}>
+        <div className={styles.infoDrawerContent}>
+          <button className={styles.closeDrawerBtn} onClick={() => setActiveFooterTab(null)}>
+            <X size={16} />
+          </button>
+          {activeFooterTab === 'ayuda' && (
+            <>
+              <h4>Centro de Ayuda y Soporte</h4>
+              <p>¿Tienes problemas para acceder? Asegúrate de que tus credenciales coincidan con las registradas. Si experimentas comportamientos inesperados, limpia la caché de tu navegador o contacta con la administración.</p>
+            </>
+          )}
+          {activeFooterTab === 'contacto' && (
+            <>
+              <h4>Contacto de Prensa y Soporte</h4>
+              <p>¿Quieres reportar un bug o hacernos una propuesta? Escríbenos directamente a <span className={styles.highlightText}>support@walter.network</span> o búscanos en los canales comunitarios oficiales.</p>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Footer Pro */}
       <footer className={styles.landingFooter}>
         <div className={styles.footerLinks}>
-          <button 
+          <button
             className={`${styles.footerLinkItem} ${activeFooterTab === 'ayuda' ? styles.activeLink : ''}`}
             onClick={() => setActiveFooterTab(activeFooterTab === 'ayuda' ? null : 'ayuda')}
           >
             <HelpCircle size={14} />
             Ayuda
           </button>
-          <button 
+          <button
             className={`${styles.footerLinkItem} ${activeFooterTab === 'contacto' ? styles.activeLink : ''}`}
             onClick={() => setActiveFooterTab(activeFooterTab === 'contacto' ? null : 'contacto')}
           >
@@ -146,14 +128,12 @@ export default function Auth({ onLogin }) {
         <p className={styles.copyright}>&copy; {new Date().getFullYear()} Walter. Red Social Comunitaria.</p>
       </footer>
 
-      {/* MODAL DE AUTENTICACIÓN */}
       {isModalOpen && (
         <div className={styles.modalOverlay} onClick={closeAuthModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={closeAuthModal} title="Cerrar">
               <X size={20} />
             </button>
-
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>
                 {isSignUp ? 'Crea tu cuenta en Walter' : 'Te damos la bienvenida'}
@@ -162,7 +142,6 @@ export default function Auth({ onLogin }) {
                 {isSignUp ? 'Completa los campos para unirte a la red.' : 'Introduce tus credenciales para continuar.'}
               </p>
             </div>
-
             <form onSubmit={isSignUp ? handleSignUp : handleLogin} className={styles.form}>
               {isSignUp && (
                 <div className={styles.inputGroup}>
@@ -178,7 +157,6 @@ export default function Auth({ onLogin }) {
                   />
                 </div>
               )}
-
               <div className={styles.inputGroup}>
                 <Mail size={18} className={styles.inputIcon} />
                 <input
@@ -190,7 +168,6 @@ export default function Auth({ onLogin }) {
                   autoComplete="email"
                 />
               </div>
-
               <div className={styles.inputGroup}>
                 <Lock size={18} className={styles.inputIcon} />
                 <input
@@ -202,26 +179,16 @@ export default function Auth({ onLogin }) {
                   autoComplete="current-password"
                 />
               </div>
-
               {error && <p className={styles.errorText}>{error}</p>}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={styles.submitBtn}
-              >
+              <button type="submit" disabled={loading} className={styles.submitBtn}>
                 {loading ? 'Procesando...' : (isSignUp ? 'Registrarse y Entrar' : 'Iniciar Sesión')}
               </button>
             </form>
-
             <div className={styles.toggleContainer}>
               <p className={styles.toggleText}>
                 {isSignUp ? '¿Ya formas parte de Walter?' : '¿Aún no tienes cuenta?'}
               </p>
-              <button
-                onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
-                className={styles.toggleBtn}
-              >
+              <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className={styles.toggleBtn}>
                 {isSignUp ? 'Acceder con mi cuenta' : 'Crear una cuenta nueva'}
               </button>
             </div>

@@ -1,3 +1,9 @@
+@property --w-color {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #aa0e4a;
+}
+
 /* Contenedor Principal de la Landing Page */
 .landingPage {
   min-height: 100vh;
@@ -45,7 +51,7 @@
   z-index: 2;
 }
 
-/* REJILLA HERO (Asimétrica y Adaptativa) */
+/* REJILLA HERO */
 .heroGrid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -67,7 +73,7 @@
 
 @keyframes slideFadeInLeft {
   from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .mainTitle {
@@ -102,7 +108,7 @@
 
 @keyframes slideFadeInRight {
   from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .giantLogoContainer {
@@ -113,7 +119,7 @@
   padding: 1rem;
 }
 
-/* LA "W" GIGANTE - DEGRADADO SUAVE SIN SALTOS */
+/* LA "W" GIGANTE — color interpolado nativamente, sin saltos */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
@@ -121,38 +127,20 @@
   display: block;
   line-height: 0.9;
   letter-spacing: -12px;
-
   padding-right: 3rem;
   padding-bottom: 2rem;
   margin-right: -3rem;
 
-  background: linear-gradient(
-    90deg,
-    var(--text-primary)  0%,
-    var(--text-primary)  5%,
-    var(--primary)       25%,
-    #aa0e4a              40%,
-    #cc3311              50%,
-    #aa0e4a              60%,
-    var(--primary)       75%,
-    var(--text-primary)  95%,
-    var(--text-primary)  100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--w-color);
+  animation: wColor 4s ease-in-out infinite alternate;
 
-  animation: shimmer 6s ease-in-out infinite;
-
-  filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
-          drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
+  filter: drop-shadow(0 15px 40px rgba(170, 14, 74, 0.25))
+          drop-shadow(0 0 80px rgba(170, 14, 74, 0.15));
 }
 
-@keyframes shimmer {
-  0%   { background-position: 100% 0; }
-  50%  { background-position:   0% 0; }
-  100% { background-position: 100% 0; }
+@keyframes wColor {
+  0%   { --w-color: #aa0e4a; }
+  100% { --w-color: #ffffff; }
 }
 
 /* Botones */
@@ -249,18 +237,19 @@
   margin: 0;
 }
 
-/* Panel Desplegable — siempre en el DOM, animado con max-height */
+/* Panel Desplegable — siempre en el DOM, sin desmontarse */
 .infoDrawer {
   background-color: var(--bg-primary);
   border-top: 3px solid transparent;
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.35s ease,
-              padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   padding: 0 max(1.5rem, 4vw);
   z-index: 4;
-  box-shadow: none;
+  transition:
+    max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    padding    0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s ease,
+    box-shadow   0.4s ease;
 }
 
 .infoDrawerOpen {
@@ -332,12 +321,12 @@
 
 @keyframes overlayFadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 @keyframes modalScaleIn {
   from { transform: scale(0.94) translateY(10px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+  to   { transform: scale(1) translateY(0);       opacity: 1; }
 }
 
 .modalClose {
