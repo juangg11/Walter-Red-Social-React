@@ -227,6 +227,7 @@
   min-width: 18.75rem;
   max-height: 25rem;
   overflow-y: auto;
+  overflow-x: hidden; /* FIX: Evita que el movimiento del hover rompa el ancho */
   z-index: 10000;
   box-shadow: var(--shadow-md);
   border: 2px solid var(--primary-hover);
