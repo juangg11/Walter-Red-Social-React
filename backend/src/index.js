@@ -16,6 +16,9 @@ import http from 'http';
 import { WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken';
 
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
+
 dotenv.config();
 
 const app  = express();
@@ -24,7 +27,7 @@ const server = http.createServer(app);
 const socketsByUser = new Map();
 
 function normalizeOrigin(origin) {
-  return String(origin || '').trim().replace(/(?=(\/+))\1$/, ''); // No tocar, habia un HotSpot de Seguridad. Puesto así elimina la barra final si existe, para evitar problemas de coincidencia de URLs con o sin barra al final
+  return String(origin || '').trim().replace(/(?=(\/+))\1$/, ''); 
 }
 
 const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -47,6 +50,27 @@ app.use(cors({
 }));
 app.use(securityMiddleware);
 app.use(express.json());
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Walter API',
+      version: '1.0.0',
+      description: 'Documentación interactiva de la red social Walter',
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}/api`,
+        description: 'Servidor Local de Desarrollo'
+      },
+    ],
+  },
+  apis: ['./routes/*.js'], 
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/comunidades', comunidadesRoutes);
@@ -104,4 +128,5 @@ app.set('broadcastChatMessage', async (message, recipients = []) => {
 
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Documentación disponible en http://localhost:${PORT}/api-docs`);
 });
