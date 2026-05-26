@@ -1,3 +1,4 @@
+/* Contenedor Principal de la Landing Page */
 .landingPage {
   min-height: 100vh;
   display: flex;
@@ -11,6 +12,7 @@
   box-sizing: border-box;
 }
 
+/* Luces Cinéticas Traseras (Efecto Aurora) */
 .auroraGlow1 {
   position: absolute;
   top: -10%;
@@ -33,6 +35,7 @@
   pointer-events: none;
 }
 
+/* Área Central Layout */
 .mainContent {
   flex: 1;
   display: flex;
@@ -42,6 +45,7 @@
   z-index: 2;
 }
 
+/* REJILLA HERO (Asimétrica y Adaptativa) */
 .heroGrid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -52,6 +56,7 @@
   gap: 4rem;
 }
 
+/* Columna Izquierda: Mensajes con Entrada Escalonada */
 .heroLeft {
   text-align: left;
   display: flex;
@@ -87,6 +92,7 @@
   font-weight: 700;
 }
 
+/* Columna Derecha: El Escenario de la W Gigante */
 .heroRight {
   display: flex;
   align-items: center;
@@ -107,6 +113,7 @@
   padding: 1rem;   
 }
 
+/* LA "W" GIGANTE - SIN SALTOS VISUALES NI LÍNEAS DURAS */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
@@ -115,41 +122,54 @@
   line-height: 0.9; 
   letter-spacing: -12px;
 
+  /* Márgenes de seguridad contra mutilación de bordes */
   padding-right: 3rem; 
   padding-bottom: 2rem;
   margin-right: -3rem;
 
+  /* NUEVO DEGRADADO SIMÉTRICO: 
+    Empieza en text-primary (0%), viaja por los colores, y regresa exactamente a text-primary (100%).
+    Al expandir el tamaño a 400% horizontalmente, creamos un lienzo idóneo para un desplazamiento sin fisuras.
+  */
   background: linear-gradient(
     120deg,
     var(--text-primary) 0%,
-    var(--text-primary) 5%,
-    var(--primary) 25%,
-    #aa0e4a 48%,
-    #aa0e4a 52%,
-    var(--primary) 75%,
-    var(--text-primary) 95%,
+    var(--primary) 15%,
+    #aa0e4a 30%,
+    var(--primary) 45%,
+    var(--text-primary) 50%,
+    var(--primary) 55%,
+    #aa0e4a 70%,
+    var(--primary) 85%,
     var(--text-primary) 100%
   );
-  background-size: 200% auto;
+  background-size: 400% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 
-  animation: unidirectionalShimmer 7s linear infinite;
+  /* Animación fluida continua */
+  animation: seamlessShimmer 12s linear infinite;
   
+  /* Sombras ambientales */
   filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
           drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
 }
 
-@keyframes unidirectionalShimmer {
+/* Eje de desplazamiento sintonizado para background-size: 400%.
+  El movimiento de 0% a -200% desplaza el patrón de forma idéntica, 
+  haciendo que el reinicio del bucle sea invisible al ojo.
+*/
+@keyframes seamlessShimmer {
   0% {
-    background-position: 0% center;
+    background-position: 0% 50%;
   }
   100% {
-    background-position: -200% center;
+    background-position: -200% 50%;
   }
 }
 
+/* Botones con Microinteracciones Premium */
 .actionButtons {
   display: flex;
   gap: 1.25rem;
@@ -204,6 +224,7 @@
   transform: translateY(-1px);
 }
 
+/* --- INTERFAZ FOOTER Y COMPLEMENTOS --- */
 .landingFooter {
   padding: 1.5rem max(1.5rem, 4vw);
   border-top: 1px solid var(--border-light);
@@ -242,6 +263,7 @@
   margin: 0;
 }
 
+/* Panel Desplegable de Información */
 .infoDrawer {
   background-color: var(--bg-primary);
   border-top: 3px solid var(--primary);
@@ -290,6 +312,7 @@
   cursor: pointer;
 }
 
+/* --- MODAL DE AUTENTICACIÓN --- */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -467,6 +490,7 @@
   text-decoration: underline;
 }
 
+/* --- RESPONSIVIDAD ADAPTATIVA --- */
 @media (max-width: 968px) {
   .heroGrid {
     grid-template-columns: 1fr;
