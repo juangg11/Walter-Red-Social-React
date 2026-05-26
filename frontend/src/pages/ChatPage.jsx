@@ -172,6 +172,13 @@ export default function ChatPage({ user }) {
     setText(current => current + emojiData.emoji);
   }
 
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
   return (
     <main className={styles.chatPage}>
       <aside className={styles.chatSidebar}>
@@ -232,7 +239,6 @@ export default function ChatPage({ user }) {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
               className={styles.chatPanelContent}
-              style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}
             >
               <header className={styles.chatHeader}>
                 <div className={styles.chatHeaderAvatar}>
@@ -339,7 +345,12 @@ export default function ChatPage({ user }) {
                     <ImagePlus size={18} />
                     <input type="file" accept="image/*,video/*" onChange={handleFile} hidden />
                   </motion.label>
-                  <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Escribe un mensaje..." />
+                  <textarea 
+                    value={text} 
+                    onChange={e => setText(e.target.value)} 
+                    onKeyDown={handleKeyDown}
+                    placeholder="Escribe un mensaje..." 
+                  />
                   <motion.button 
                     onClick={sendMessage}
                     whileHover={text.trim() || imageData ? { scale: 1.1 } : {}}
