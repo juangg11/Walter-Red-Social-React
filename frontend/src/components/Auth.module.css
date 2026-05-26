@@ -56,7 +56,7 @@
   gap: 4rem;
 }
 
-/* Columna Izquierda: Mensajes con Entrada Escalonada */
+/* Columna Izquierda */
 .heroLeft {
   text-align: left;
   display: flex;
@@ -92,7 +92,7 @@
   font-weight: 700;
 }
 
-/* Columna Derecha: El Escenario de la W Gigante */
+/* Columna Derecha */
 .heroRight {
   display: flex;
   align-items: center;
@@ -113,7 +113,7 @@
   padding: 1rem;
 }
 
-/* LA "W" GIGANTE - DEGRADADO CONTINUO SIN SALTOS */
+/* LA "W" GIGANTE - DEGRADADO SUAVE SIN SALTOS */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
@@ -128,29 +128,34 @@
 
   background: linear-gradient(
     90deg,
-    var(--text-primary) 0%,
-    var(--text-primary) 20%,
-    var(--primary) 35%,
-    #aa0e4a 50%,
-    var(--primary) 65%,
-    var(--text-primary) 80%,
-    var(--text-primary) 100%
+    var(--text-primary)  0%,
+    var(--text-primary)  5%,
+    var(--primary)       25%,
+    #aa0e4a              40%,
+    #cc3311              50%,
+    #aa0e4a              60%,
+    var(--primary)       75%,
+    var(--text-primary)  95%,
+    var(--text-primary)  100%
   );
-  background-size: 300% 100%;
+  background-size: 250% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 
-  animation: seamlessShimmer 8s ease-in-out infinite;
+  animation: shimmer 6s ease-in-out infinite;
+
+  filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
+          drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
 }
 
-@keyframes seamlessShimmer {
+@keyframes shimmer {
   0%   { background-position: 100% 0; }
-  50%  { background-position: 0% 0; }
+  50%  { background-position:   0% 0; }
   100% { background-position: 100% 0; }
 }
 
-/* Botones con Microinteracciones Premium */
+/* Botones */
 .actionButtons {
   display: flex;
   gap: 1.25rem;
@@ -205,7 +210,7 @@
   transform: translateY(-1px);
 }
 
-/* --- INTERFAZ FOOTER Y COMPLEMENTOS --- */
+/* --- FOOTER --- */
 .landingFooter {
   padding: 1.5rem max(1.5rem, 4vw);
   border-top: 1px solid var(--border-light);
@@ -244,19 +249,25 @@
   margin: 0;
 }
 
-/* Panel Desplegable de Información */
+/* Panel Desplegable — siempre en el DOM, animado con max-height */
 .infoDrawer {
   background-color: var(--bg-primary);
-  border-top: 3px solid var(--primary);
-  padding: 1.5rem max(1.5rem, 4vw);
+  border-top: 3px solid transparent;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease,
+              padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 max(1.5rem, 4vw);
   z-index: 4;
-  box-shadow: var(--shadow-lg);
-  animation: drawerSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none;
 }
 
-@keyframes drawerSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+.infoDrawerOpen {
+  max-height: 200px;
+  border-top-color: var(--primary);
+  padding: 1.5rem max(1.5rem, 4vw);
+  box-shadow: var(--shadow-lg);
 }
 
 .infoDrawerContent {
@@ -293,7 +304,7 @@
   cursor: pointer;
 }
 
-/* --- MODAL DE AUTENTICACIÓN --- */
+/* --- MODAL --- */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -471,7 +482,7 @@
   text-decoration: underline;
 }
 
-/* --- RESPONSIVIDAD ADAPTATIVA --- */
+/* --- RESPONSIVIDAD --- */
 @media (max-width: 968px) {
   .heroGrid {
     grid-template-columns: 1fr;
