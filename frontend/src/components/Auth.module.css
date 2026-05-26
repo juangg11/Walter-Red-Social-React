@@ -4,7 +4,6 @@
   initial-value: #aa0e4a;
 }
 
-/* Contenedor Principal de la Landing Page */
 .landingPage {
   min-height: 100vh;
   display: flex;
@@ -18,7 +17,6 @@
   box-sizing: border-box;
 }
 
-/* Luces Cinéticas Traseras (Efecto Aurora) */
 .auroraGlow1 {
   position: absolute;
   top: -10%;
@@ -41,7 +39,6 @@
   pointer-events: none;
 }
 
-/* Área Central Layout */
 .mainContent {
   flex: 1;
   display: flex;
@@ -51,7 +48,6 @@
   z-index: 2;
 }
 
-/* REJILLA HERO */
 .heroGrid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -62,7 +58,6 @@
   gap: 4rem;
 }
 
-/* Columna Izquierda */
 .heroLeft {
   text-align: left;
   display: flex;
@@ -73,7 +68,7 @@
 
 @keyframes slideFadeInLeft {
   from { opacity: 0; transform: translateX(-30px); }
-  to   { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .mainTitle {
@@ -98,7 +93,6 @@
   font-weight: 700;
 }
 
-/* Columna Derecha */
 .heroRight {
   display: flex;
   align-items: center;
@@ -108,7 +102,7 @@
 
 @keyframes slideFadeInRight {
   from { opacity: 0; transform: translateX(40px); }
-  to   { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .giantLogoContainer {
@@ -119,7 +113,6 @@
   padding: 1rem;
 }
 
-/* LA "W" GIGANTE — color interpolado nativamente, sin saltos */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
@@ -139,11 +132,10 @@
 }
 
 @keyframes wColor {
-  0%   { --w-color: #aa0e4a; }
+  0% { --w-color: #aa0e4a; }
   100% { --w-color: #ffffff; }
 }
 
-/* Botones */
 .actionButtons {
   display: flex;
   gap: 1.25rem;
@@ -198,7 +190,6 @@
   transform: translateY(-1px);
 }
 
-/* --- FOOTER --- */
 .landingFooter {
   padding: 1.5rem max(1.5rem, 4vw);
   border-top: 1px solid var(--border-light);
@@ -237,7 +228,6 @@
   margin: 0;
 }
 
-/* Panel Desplegable — siempre en el DOM, sin desmontarse */
 .infoDrawer {
   background-color: var(--bg-primary);
   border-top: 3px solid transparent;
@@ -247,9 +237,9 @@
   z-index: 4;
   transition:
     max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-    padding    0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.4s ease,
-    box-shadow   0.4s ease;
+    box-shadow 0.4s ease;
 }
 
 .infoDrawerOpen {
@@ -293,7 +283,6 @@
   cursor: pointer;
 }
 
-/* --- MODAL --- */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -321,12 +310,12 @@
 
 @keyframes overlayFadeIn {
   from { opacity: 0; }
-  to   { opacity: 1; }
+  to { opacity: 1; }
 }
 
 @keyframes modalScaleIn {
   from { transform: scale(0.94) translateY(10px); opacity: 0; }
-  to   { transform: scale(1) translateY(0);       opacity: 1; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .modalClose {
@@ -471,7 +460,6 @@
   text-decoration: underline;
 }
 
-/* --- RESPONSIVIDAD --- */
 @media (max-width: 968px) {
   .heroGrid {
     grid-template-columns: 1fr;

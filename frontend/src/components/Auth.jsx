@@ -66,7 +66,7 @@ export default function Auth({ onLogin }) {
           <div className={styles.heroLeft}>
             <h1 className={styles.mainTitle}>Encuentra tu comunidad.</h1>
             <p className={styles.tagline}>
-              Únete a <span className={styles.brandText}>Walter</span>, el espacio descentralizado donde las ideas fluyen libres, los hilos cobran vida y tus intereses encuentran su hogar definitivo.
+              Únete a <span className={styles.brandText}>Walter</span>, el espacio descentralizado donde todas las ideas tienen cabida, los hilos cobran vida y tus intereses encuentran su hogar en una comunidad.
             </p>
             <div className={styles.actionButtons}>
               <button className={styles.primaryActionBtn} onClick={() => openAuthModal(true)}>
@@ -101,8 +101,8 @@ export default function Auth({ onLogin }) {
           )}
           {activeFooterTab === 'contacto' && (
             <>
-              <h4>Contacto de Prensa y Soporte</h4>
-              <p>¿Quieres reportar un bug o hacernos una propuesta? Escríbenos directamente a <span className={styles.highlightText}>support@walter.network</span> o búscanos en los canales comunitarios oficiales.</p>
+              <h4>Contacto</h4>
+              <p>¿Quieres reportar un bug o hacernos una propuesta? Escríbenos directamente a <span className={styles.highlightText}>soporte_walter@walter.com</span>.</p>
             </>
           )}
         </div>
@@ -125,7 +125,7 @@ export default function Auth({ onLogin }) {
             Contacto
           </button>
         </div>
-        <p className={styles.copyright}>&copy; {new Date().getFullYear()} Walter. Red Social Comunitaria.</p>
+        <p className={styles.copyright}>&copy; {new Date().getFullYear()} Walter - Red Social.</p>
       </footer>
 
       {isModalOpen && (
