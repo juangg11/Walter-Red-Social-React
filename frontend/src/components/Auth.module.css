@@ -105,46 +105,62 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+/* Corrección del contenedor para asegurar que no mutile la sombra ni el padding */
 .giantLogoContainer {
   position: relative;
   display: inline-block;
   user-select: none;
+  overflow: visible; /* Forzamos a que se vea todo el desborde de efectos */
+  padding: 1rem;     /* Margen de seguridad extra al contenedor */
 }
 
-/* LA "W" GIGANTE CON ANIMACIÓN UNIDIRECCIONAL CONTINUA */
+/* LA "W" GIGANTE MODIFICADA CON PADDING DE SEGURIDAD */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
   font-family: 'Montserrat', 'Arial Black', system-ui, sans-serif;
-  line-height: 0.75;
-  letter-spacing: -12px;
   display: block;
+  
+  /* Ajuste de línea y espacio: subimos un poco el line-height para evitar cortes arriba/abajo */
+  line-height: 0.9; 
+  letter-spacing: -12px;
 
-  /* Gradiente lineal repetitivo para simular movimiento infinito en la misma dirección */
+  /* --- EL TRUCO DE PADDING --- */
+  /* Añadimos padding a la derecha y abajo para que la W y su sombra tengan espacio para renderizarse completas */
+  padding-right: 3rem; 
+  padding-bottom: 2rem;
+  margin-right: -3rem; /* Compensamos el padding para que no empuje el diseño hacia la izquierda */
+
+  /* Gradiente lineal reflectante */
   background: linear-gradient(
-    90deg,
+    to right,
     var(--text-primary) 0%,
     var(--primary) 25%,
     #ff7300 50%,
     var(--primary) 75%,
     var(--text-primary) 100%
   );
-  background-size: 200% linear;
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 
-  /* Animación constante hacia la izquierda sin rebotes */
-  animation: unidirectionalShimmer 5s linear infinite;
+  /* Animación constante hacia la izquierda */
+  animation: unidirectionalShimmer 4s linear infinite;
   
-  /* Sombra ambiental de alta definición */
-  filter: drop-shadow(0 10px 40px rgba(255, 69, 0, 0.25))
-          drop-shadow(0 0 80px rgba(255, 69, 0, 0.1));
+  /* Sombra ambiental reactiva */
+  filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
+          drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
 }
 
-/* Movimiento de 0% a -200% garantiza que el flujo vaya siempre en el mismo sentido sin saltos perceptibles */
+/* Desplazamiento matemático idóneo para simular bucle infinito en el mismo sentido */
 @keyframes unidirectionalShimmer {
-  0% { background-position: 0% center; }
-  100% { background-position: -200% center; }
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
 }
 
 /* Botones con Microinteracciones Premium */
