@@ -140,11 +140,11 @@
 
 .profileMenu {
   display: flex;
-  flex-direction: row-reverse; 
   align-items: center;
   gap: 10px;
   padding-left: 16px;
   border-left: 1px solid var(--border-light);
+  margin-left: auto;
   min-width: 0;
 }
 
@@ -152,13 +152,12 @@
   font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--navbar-text);
-  white-space: nowrap; 
-  flex-shrink: 0; 
+  white-space: nowrap;
+  flex-shrink: 0;
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  text-align: right; 
 }
 
 .profileMenu button {
