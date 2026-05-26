@@ -1,9 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ImagePlus, MessageCircle, Reply, Search, Send, Smile } from 'lucide-react';
 import request, { getChatSocketUrl } from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import styles from './ChatPage.module.css';
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -12 },
+  visible: { 
+    opacity: 1, 
+    x: 0, 
+    transition: { type: "spring", stiffness: 350, damping: 25 } 
+  }
+};
+
+const messageVariants = {
+  initial: { opacity: 0, scale: 0.9, y: 12 },
+  animate: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0, 
+    transition: { type: "spring", stiffness: 450, damping: 28 } 
+  }
+};
 
 export default function ChatPage({ user }) {
   const [chats, setChats] = useState([]);
@@ -27,17 +55,13 @@ export default function ChatPage({ user }) {
 
   useEffect(() => {
     let ignore = false;
-
     request('/chat')
       .then(data => {
         if (ignore) return;
         setChats(data);
         setActiveChat(prev => prev || data[0] || null);
       });
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
   useEffect(() => {
@@ -52,9 +76,7 @@ export default function ChatPage({ user }) {
         if (!ignore) setMessages([]);
       });
 
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [activeChat?.id]);
 
   useEffect(() => {
@@ -73,11 +95,11 @@ export default function ChatPage({ user }) {
         setChats(cur => cur.map((chat) => (
           Number(chat.id) === Number(message.chat_id)
             ? {
-              ...chat,
-              ultimo_mensaje: message.contenido || 'Imagen',
-              ultima_imagen: message.media_url || null,
-              ultimo_mensaje_fecha: message.fecha_creacion,
-            }
+                ...chat,
+                ultimo_mensaje: message.contenido || 'Imagen',
+                ultima_imagen: message.media_url || null,
+                ultimo_mensaje_fecha: message.fecha_creacion,
+              }
             : chat
         )));
 
@@ -90,7 +112,11 @@ export default function ChatPage({ user }) {
     ws.onerror = () => {};
     return () => ws.close();
   }, [activeChat?.id]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
+
+  useEffect(() => { 
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+  }, [messages.length]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.trim().length < 2) {
@@ -118,6 +144,8 @@ export default function ChatPage({ user }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageFile(file);
+    const localUrl = URL.createObjectURL(file);
+    setImageData(localUrl);
   }
 
   async function sendMessage() {
@@ -127,7 +155,10 @@ export default function ChatPage({ user }) {
       const uploaded = await uploadToCloudinary(imageFile, 'walter/chat');
       mediaAssetId = uploaded.asset.id;
     }
-    const created = await request(`/chat/${activeChat.id}/mensajes`, { method: 'POST', body: JSON.stringify({ contenido: text, media_asset_id: mediaAssetId, respuesta_a_id: replyTo?.id || null,}) });
+    const created = await request(`/chat/${activeChat.id}/mensajes`, { 
+      method: 'POST', 
+      body: JSON.stringify({ contenido: text, media_asset_id: mediaAssetId, respuesta_a_id: replyTo?.id || null }) 
+    });
     setMessages(cur => cur.some(m => m.id === created.id) ? cur : [...cur, created]);
     setText('');
     setImageData('');
@@ -150,120 +181,189 @@ export default function ChatPage({ user }) {
         </div>
 
         {users.length > 0 && (
-          <div className={styles.userResults}>
+          <motion.div variants={listVariants} initial="hidden" animate="visible" className={styles.userResults}>
             {users.map(found => (
-              <button key={found.id} onClick={() => openChat(found.id)}>
+              <motion.button key={found.id} variants={itemVariants} onClick={() => openChat(found.id)} whileTap={{ scale: 0.98 }}>
                 <div className={styles.avatarSmall}>
                   <span>{found.username.slice(0, 2).toUpperCase()}</span>
                 </div>
                 <span>{found.username}</span>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         )}
 
         {users.length === 0 && (
           <div className={styles.chatList}>
             {chats.length === 0 ? (
               <div className={styles.emptyChat}><span>Busca a alguien para empezar</span></div>
-            ) : chats.map(chat => (
-              <button key={chat.id} className={activeChat?.id === chat.id ? styles.active : ''} onClick={() => setActiveChat(chat)}>
-                <div className={styles.avatarSmall}>
-                  <span>{String(chat.other_username).slice(0, 2).toUpperCase()}</span>
-                </div>
-                <div>
-                  <strong>{chat.other_username}</strong>
-                  <span>{chat.ultimo_mensaje || (chat.ultima_imagen ? 'Imagen' : 'Sin mensajes aún')}</span>
-                </div>
-              </button>
-            ))}
+            ) : (
+              <motion.div variants={listVariants} initial="hidden" animate="visible">
+                {chats.map(chat => (
+                  <motion.button 
+                    key={chat.id} 
+                    variants={itemVariants}
+                    className={activeChat?.id === chat.id ? styles.active : ''} 
+                    onClick={() => setActiveChat(chat)}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className={styles.avatarSmall}>
+                      <span>{String(chat.other_username).slice(0, 2).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <strong>{chat.other_username}</strong>
+                      <span>{chat.ultimo_mensaje || (chat.ultima_imagen ? 'Imagen' : 'Sin mensajes aún')}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
           </div>
         )}
       </aside>
 
       <section className={styles.chatPanel}>
-        {activeChat ? (
-          <>
-            <header className={styles.chatHeader}>
-              <div className={styles.chatHeaderAvatar}>
-                <span>{String(activeChat.other_username).slice(0, 2).toUpperCase()}</span>
-              </div>
-              <div>
-                <h2>{activeChat.other_username}</h2>
-              </div>
-            </header>
+        <AnimatePresence mode="wait">
+          {activeChat ? (
+            <motion.div 
+              key={activeChat.id}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className={styles.chatPanelContent}
+              style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}
+            >
+              <header className={styles.chatHeader}>
+                <div className={styles.chatHeaderAvatar}>
+                  <span>{String(activeChat.other_username).slice(0, 2).toUpperCase()}</span>
+                </div>
+                <div>
+                  <h2>{activeChat.other_username}</h2>
+                </div>
+              </header>
 
-            <div className={styles.messagesList}>
-              {messages.map(message => {
-                const mine = message.usuario_id === user.id;
-                return (
-                  <div key={message.id} className={`${styles.messageRow} ${mine ? styles.mine : ''}`}>
-                    <div className={styles.messageBubble}>
-                      {message.respuesta_a_id && (
-                        <div className={styles.messageReply}>↳ {message.respuesta_username}: {message.respuesta_contenido || 'Imagen'}</div>
-                      )}
-                      {message.contenido && <p>{message.contenido}</p>}
-                      {message.media_url && (
-                        message.media_resource_type === 'video'
-                          ? <video src={message.media_url} controls />
-                          : <img src={message.media_url} alt="Imagen del chat" />
-                      )}
-                      <button className={styles.messageReplyBtn} onClick={() => setReplyTo(message)}><Reply size={14} /></button>
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={bottomRef} />
-            </div>
-
-            <footer className={styles.chatComposer} ref={composerRef}>
-              {replyTo && (
-                <div className={styles.composerReply}>
-                  Respondiendo a {replyTo.username}: {replyTo.contenido || 'Imagen'}
-                  <button onClick={() => setReplyTo(null)}>×</button>
-                </div>
-              )}
-              {imageData && (
-                <div className={styles.composerImage}>
-                  {imageFile?.type?.startsWith('video/')
-                    ? <video src={imageData} controls />
-                    : <img src={imageData} alt="Vista previa" />}
-                  <button onClick={() => { setImageData(''); setImageFile(null); }}>×</button>
-                </div>
-              )}
-              {showEmojis && (
-                <div className={styles.emojiPickerPanel}>
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
-                    autoFocusSearch={false}
-                    skinTonesDisabled
-                    lazyLoadEmojis
-                    previewConfig={{ showPreview: false }}
-                    searchPlaceHolder="Buscar emoji"
-                    width="100%"
-                  />
-                </div>
-              )}
-              <div className={styles.composerRow}>
-                <button type="button" onClick={() => setShowEmojis(v => !v)} aria-label="Abrir selector de emojis">
-                  <Smile size={18} />
-                </button>
-                <label>
-                  <ImagePlus size={18} />
-                  <input type="file" accept="image/*,video/*" onChange={handleFile} hidden />
-                </label>
-                <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Escribe un mensaje..." />
-                <button onClick={sendMessage}><Send size={18} /></button>
+              <div className={styles.messagesList}>
+                {messages.map(message => {
+                  const mine = message.usuario_id === user.id;
+                  return (
+                    <motion.div 
+                      key={message.id} 
+                      variants={messageVariants}
+                      initial="initial"
+                      animate="animate"
+                      className={`${styles.messageRow} ${mine ? styles.mine : ''}`}
+                    >
+                      <div className={styles.messageBubble}>
+                        {message.respuesta_a_id && (
+                          <div className={styles.messageReply}>↳ {message.respuesta_username}: {message.respuesta_contenido || 'Imagen'}</div>
+                        )}
+                        {message.contenido && <p>{message.contenido}</p>}
+                        {message.media_url && (
+                          message.media_resource_type === 'video'
+                            ? <video src={message.media_url} controls />
+                            : <img src={message.media_url} alt="Imagen del chat" />
+                        )}
+                        <button className={styles.messageReplyBtn} onClick={() => setReplyTo(message)}><Reply size={14} /></button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                <div ref={bottomRef} />
               </div>
-            </footer>
-          </>
-        ) : (
-          <div className={styles.chatEmptyState}>
-            <MessageCircle size={36} />
-            <h2>Tus mensajes</h2>
-            <p>Busca un usuario y solicita escribirle un primer mensaje.</p>
-          </div>
-        )}
+
+              <footer className={styles.chatComposer} ref={composerRef}>
+                <AnimatePresence>
+                  {replyTo && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, y: 10 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={{ opacity: 0, height: 0, y: 10 }}
+                      className={styles.composerReply}
+                    >
+                      Respondiendo a {replyTo.username}: {replyTo.contenido || 'Imagen'}
+                      <button onClick={() => setReplyTo(null)}>×</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {imageData && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      className={styles.composerImage}
+                    >
+                      {imageFile?.type?.startsWith('video/')
+                        ? <video src={imageData} controls />
+                        : <img src={imageData} alt="Vista previa" />}
+                      <button onClick={() => { setImageData(''); setImageFile(null); }}>×</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {showEmojis && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 15, scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                      className={styles.emojiPickerPanel}
+                    >
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        autoFocusSearch={false}
+                        skinTonesDisabled
+                        lazyLoadEmojis
+                        previewConfig={{ showPreview: false }}
+                        searchPlaceHolder="Buscar emoji"
+                        width="100%"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className={styles.composerRow}>
+                  <motion.button 
+                    type="button" 
+                    onClick={() => setShowEmojis(v => !v)} 
+                    aria-label="Abrir selector de emojis"
+                    whileHover={{ scale: 1.12 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Smile size={18} />
+                  </motion.button>
+                  <motion.label whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.9 }}>
+                    <ImagePlus size={18} />
+                    <input type="file" accept="image/*,video/*" onChange={handleFile} hidden />
+                  </motion.label>
+                  <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Escribe un mensaje..." />
+                  <motion.button 
+                    onClick={sendMessage}
+                    whileHover={text.trim() || imageData ? { scale: 1.1 } : {}}
+                    whileTap={text.trim() || imageData ? { scale: 0.92 } : {}}
+                  >
+                    <Send size={18} />
+                  </motion.button>
+                </div>
+              </footer>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="empty"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.chatEmptyState}
+            >
+              <MessageCircle size={36} />
+              <h2>Tus mensajes</h2>
+              <p>Busca un usuario y solicita escribirle un primer mensaje.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </main>
   );
