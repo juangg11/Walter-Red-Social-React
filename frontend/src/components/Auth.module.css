@@ -127,31 +127,27 @@
   margin-right: -3rem;
 
   background: linear-gradient(
-    120deg,
-    var(--text-primary),
-    var(--primary),
-    #aa0e4a,
-    var(--primary),
-    var(--text-primary),
-    var(--primary),
-    #aa0e4a,
-    var(--primary),
-    var(--text-primary)
+    90deg,
+    var(--text-primary) 0%,
+    var(--text-primary) 20%,
+    var(--primary) 35%,
+    #aa0e4a 50%,
+    var(--primary) 65%,
+    var(--text-primary) 80%,
+    var(--text-primary) 100%
   );
-  background-size: 200% 100%;
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 
-  animation: seamlessShimmer 10s linear infinite;
-
-  filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
-          drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
+  animation: seamlessShimmer 8s ease-in-out infinite;
 }
 
 @keyframes seamlessShimmer {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+  0%   { background-position: 100% 0; }
+  50%  { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
 }
 
 /* Botones con Microinteracciones Premium */
