@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { comunidadesController } from '../controllers/comunidades.controller.js';
 import { comunidadesService } from '../services/comunidades.service.js';
 
@@ -10,6 +10,7 @@ describe('comunidadesController', () => {
   beforeEach(() => {
     mockReq = {
       params: {},
+      query: {},
       body: {},
       user: { id: '123' },
     };
@@ -33,7 +34,7 @@ describe('comunidadesController', () => {
 
   describe('create', () => {
     it('should create a community', async () => {
-      mockReq.body = { nombre: 'New Community', descripcion: 'Description' };
+      mockReq.body = { nombre: 'New Community', descripcion: 'Description', categoria: 'tech' };
       const mockCreated = { id: 1, nombre: 'New Community' };
       comunidadesService.create.mockResolvedValue(mockCreated);
 
@@ -47,23 +48,22 @@ describe('comunidadesController', () => {
   describe('join', () => {
     it('should join a community', async () => {
       mockReq.params = { id: '1' };
-      comunidadesService.join.mockResolvedValue({ joined: true });
+      comunidadesService.join.mockResolvedValue(undefined);
 
       await comunidadesController.join(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith({ mensaje: 'Te has unido a la comunidad' });
     });
   });
 
   describe('leave', () => {
     it('should leave a community', async () => {
       mockReq.params = { id: '1' };
-      comunidadesService.leave.mockResolvedValue({});
+      comunidadesService.leave.mockResolvedValue(undefined);
 
       await comunidadesController.leave(mockReq, mockRes);
 
-      expect(mockRes.json).toHaveBeenCalled();
+      expect(mockRes.json).toHaveBeenCalledWith({ mensaje: 'Has abandonado la comunidad' });
     });
   });
 });
-

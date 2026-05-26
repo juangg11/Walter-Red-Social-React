@@ -11,6 +11,7 @@ describe('authMiddleware', () => {
   let mockReq, mockRes, mockNext;
 
   beforeEach(() => {
+    process.env.JWT_SECRET = 'testsecret';
     mockReq = {
       headers: {},
     };

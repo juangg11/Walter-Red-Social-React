@@ -1,136 +1,496 @@
-.authPage {
+/* Contenedor Principal de la Landing Page */
+.landingPage {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* --- ANIMACIONES ESTILO LIBRERÍA DE DISEÑO (AURORAS) --- */
+.auroraGlow1 {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(255, 69, 0, 0.12) 0%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+  animation: auroraFloat 12s ease-in-out infinite alternate;
+}
+
+.auroraGlow2 {
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(255, 115, 0, 0.08) 0%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+  animation: auroraFloat 15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes auroraFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, 30px) scale(1.15); }
+}
+
+/* Área central Hero */
+.mainContent {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  padding: 1.25rem;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  z-index: 2;
 }
 
-.authContainer {
-  max-width: 400px;
-  margin: auto;
-  padding: var(--spacing-2xl);
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
+.heroSection {
   text-align: center;
+  max-width: 680px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: libFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.header {
+/* --- LOGO: LA "W" ESTILIZADA PRO --- */
+.logoContainer {
+  position: relative;
   margin-bottom: 2rem;
-  text-align: center;
+  padding: 0.5rem;
+  display: inline-block;
 }
 
-.logo {
-  color: var(--primary);
-  font-size: 2.25rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  letter-spacing: -0.0625rem;
+.textLogoMark {
+  font-size: 6.5rem;
+  font-weight: 900;
+  /* Fuente geométrica ultra-moderna y compacta */
+  font-family: 'Montserrat', 'Arial Black', -apple-system, sans-serif;
+  letter-spacing: -4px;
+  line-height: 1;
+  display: block;
+  
+  /* Degradado líquido animado dentro de la propia letra */
+  background: linear-gradient(
+    -45deg,
+    var(--primary) 0%,
+    #ff7300 25%,
+    var(--text-primary) 50%,
+    #ff3c00 75%,
+    var(--primary) 100%
+  );
+  background-size: 400% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  /* Animación combinada de flujo de color y pulso de brillo nítido */
+  animation: 
+    liquidGradient 6s linear infinite,
+    proGlowPulse 3s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
-.subtitle {
+@keyframes liquidGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes proGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 8px rgba(255, 69, 0, 0.15))
+            drop-shadow(0 4px 12px rgba(0, 0, 0, 0.05));
+    transform: scale(1);
+  }
+  100% {
+    filter: drop-shadow(0 0 25px rgba(255, 69, 0, 0.45))
+            drop-shadow(0 0 40px rgba(255, 115, 0, 0.2));
+    transform: scale(1.02);
+  }
+}
+
+/* Textos e Impacto Visual */
+.mainTitle {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.12rem;
+  line-height: 1.05;
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+}
+
+.tagline {
+  font-size: 1.2rem;
   color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 540px;
+  margin-bottom: 2.5rem;
 }
 
+.brandText {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Botones con Microinteracciones Premium */
+.actionButtons {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.primaryActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  padding: 0.95rem 2rem;
+  border-radius: var(--border-radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(255, 69, 0, 0.25);
+}
+
+.primaryActionBtn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(255, 69, 0, 0.4);
+}
+
+.primaryActionBtn:hover .arrowIcon {
+  transform: translateX(4px);
+}
+
+.arrowIcon {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.secondaryActionBtn {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  padding: 0.95rem 2rem;
+  border-radius: var(--border-radius-md);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.secondaryActionBtn:hover {
+  background-color: var(--bg-primary);
+  border-color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* --- FOOTER Y PANEL INFORMATIVO --- */
+.landingFooter {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--border-light);
+  background-color: var(--bg-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 3;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 2rem;
+}
+
+.footerLinkItem {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.2s ease;
+}
+
+.footerLinkItem:hover, .activeLink {
+  color: var(--primary);
+}
+
+.copyright {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Panel Desplegable de Ayuda (Efecto Resorte) */
+.infoDrawer {
+  background-color: var(--bg-primary);
+  border-top: 3px solid var(--primary);
+  padding: 1.5rem var(--spacing-xl);
+  z-index: 4;
+  box-shadow: var(--shadow-lg);
+  animation: drawerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.infoDrawerContent {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.infoDrawerContent h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.infoDrawerContent p {
+  margin: 0;
+  font-size: 0.925rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.highlightText {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.closeDrawerBtn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.closeDrawerBtn:hover {
+  color: var(--primary);
+}
+
+/* --- MODAL CON ANIMACIÓN CINÉTICA RADIX-STYLE --- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px); /* Blur de alta fidelidad */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+.modalContent {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-md);
+  max-width: 440px;
+  width: 90%;
+  padding: 2.5rem;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  
+  /* Curva de rebote elástico estilo Framer Motion */
+  animation: modalScaleIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.92) translateY(15px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modalClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.modalClose:hover {
+  color: var(--primary);
+  background-color: var(--bg-secondary);
+}
+
+.modalHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.modalTitle {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.4rem 0;
+  letter-spacing: -0.03em;
+}
+
+.modalSubtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Formulario e Inputs de Foco Fluido */
 .form {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
 .inputGroup {
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .inputIcon {
   position: absolute;
-  left: 0.75rem;
+  left: 0.95rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--secondary);
+  color: var(--text-secondary);
   pointer-events: none;
   z-index: 10;
+  transition: color 0.2s;
 }
 
 .inputGroup input {
   display: block;
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) 2.5rem;
+  padding: 0.9rem 1rem 0.9rem 2.75rem;
   border: 1px solid var(--border-light);
   border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  font-family: var(--font-base);
+  font-size: 0.95rem;
   color: var(--text-primary);
-  background-color: var(--bg-primary);
-  transition: all 0.2s;
+  background-color: var(--bg-secondary);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
 
 .inputGroup input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  background-color: var(--bg-primary);
+  box-shadow: 0 0 0 4px rgba(255, 69, 0, 0.15);
+}
+
+/* Cambia el color del icono en base al foco del input */
+.inputGroup input:focus + .inputIcon,
+.inputGroup:focus-within .inputIcon {
+  color: var(--primary);
 }
 
 .errorText {
-  font-size: 0.8125rem;
-  color: #E24B4A;
-  margin-bottom: 0.75rem;
-  padding-left: 0.25rem;
+  font-size: 0.85rem;
+  color: #e24b4a;
+  margin: 0 0 1.15rem 0;
   text-align: left;
 }
 
 .submitBtn {
   display: block;
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 0.95rem;
   border: none;
   border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  font-family: var(--font-base);
+  font-size: 1rem;
   background-color: var(--primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
-  margin-top: 1rem;
-  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
 }
 
 .submitBtn:hover:not(:disabled) {
   background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .submitBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .toggleContainer {
   text-align: center;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1.5rem;
 }
 
 .toggleText {
   color: var(--text-secondary);
-  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
 }
 
 .toggleBtn {
   background: none;
-  border: 0.125rem solid var(--primary);
+  border: none;
   color: var(--primary);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
-  font-weight: 600;
-  font-size: var(--font-size-base);
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  width: 100%;
-  transition: all 0.2s;
+  transition: color 0.2s;
+  text-decoration: none;
 }
 
 .toggleBtn:hover {
-  background-color: var(--primary);
-  color: white;
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* Animación general de subida para el contenido de la Landing */
+@keyframes libFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Adaptación móvil estricta */
+@media (max-width: 580px) {
+  .mainTitle { font-size: 2.75rem; letter-spacing: -0.06rem; }
+  .textLogoMark { font-size: 5rem; }
+  .actionButtons { flex-direction: column; width: 100%; gap: 0.75rem; }
+  .primaryActionBtn, .secondaryActionBtn { width: 100%; justify-content: center; }
+  .landingFooter { flex-direction: column; gap: 1.25rem; text-align: center; padding: 1.5rem; }
+  .footerLinks { justify-content: center; }
 }

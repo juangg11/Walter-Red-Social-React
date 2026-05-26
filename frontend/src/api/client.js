@@ -1,4 +1,4 @@
-const URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 const WS_URL = import.meta.env.VITE_WS_URL;
 
 // Definir hosts permitidos de forma estricta
@@ -34,7 +34,7 @@ export default async function request(path, options = {}) {
     throw new Error('Ruta de petición no segura.');
   }
   
-  const res = await fetch(`${URL}${cleanPath}`, {
+  const res = await fetch(`${API_URL}${cleanPath}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -70,8 +70,8 @@ export function getChatSocketUrl() {
   const configured = (WS_URL || '').trim();
   let base = configured;
 
-  if (!base && URL) {
-    let apiBase = String(URL);
+  if (!base && API_URL) {
+    let apiBase = String(API_URL);
 
     while (apiBase.endsWith('/')) {
       apiBase = apiBase.slice(0, -1);

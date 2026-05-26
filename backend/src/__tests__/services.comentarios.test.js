@@ -12,12 +12,12 @@ describe('comentariosService', () => {
     vi.clearAllMocks();
   });
 
-  describe('getAll', () => {
+  describe('getByPublicacion', () => {
     it('should get all comments for a post', async () => {
       const mockComments = [{ id: 1, contenido: 'Comment' }];
       CommentModel.findByPostId.mockResolvedValue(mockComments);
 
-      const result = await comentariosService.getAll(1);
+      const result = await comentariosService.getByPublicacion(1);
 
       expect(result).toEqual(mockComments);
     });
@@ -27,12 +27,13 @@ describe('comentariosService', () => {
     it('should create a comment', async () => {
       PostModel.findRawById.mockResolvedValue({ id: 1 });
       CommentModel.create.mockResolvedValue(1);
-      CommentModel.findById.mockResolvedValue({ id: 1, contenido: 'New comment' });
+      CommentModel.findWithUserById.mockResolvedValue({ id: 1, contenido: 'New comment' });
 
       const result = await comentariosService.create({
         contenido: 'New comment',
         publicacion_id: 1,
-        usuarioId: '123',
+        userId: '123',
+        username: 'testuser',
       });
 
       expect(result).toBeDefined();

@@ -7,16 +7,16 @@ vi.mock('../config/db.js');
 
 describe('Services - Generic Tests', () => {
   describe('chatService', () => {
-    it('should have getConversations method', () => {
-      expect(typeof chatService.getConversations).toBe('function');
+    it('should have list method', () => {
+      expect(typeof chatService.list).toBe('function');
     });
 
-    it('should have getMessages method', () => {
-      expect(typeof chatService.getMessages).toBe('function');
+    it('should have messages method', () => {
+      expect(typeof chatService.messages).toBe('function');
     });
 
-    it('should have createMessage method', () => {
-      expect(typeof chatService.createMessage).toBe('function');
+    it('should have send method', () => {
+      expect(typeof chatService.send).toBe('function');
     });
   });
 

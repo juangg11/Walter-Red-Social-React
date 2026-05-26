@@ -100,12 +100,12 @@ describe('Models - Generic Tests', () => {
       expect(typeof CommunityModel.isMember).toBe('function');
     });
 
-    it('should have join method', () => {
-      expect(typeof CommunityModel.join).toBe('function');
+    it('should have addMember method', () => {
+      expect(typeof CommunityModel.addMember).toBe('function');
     });
 
-    it('should have leave method', () => {
-      expect(typeof CommunityModel.leave).toBe('function');
+    it('should have removeMember method', () => {
+      expect(typeof CommunityModel.removeMember).toBe('function');
     });
 
     it('should have incrementPosts method', () => {
@@ -118,8 +118,8 @@ describe('Models - Generic Tests', () => {
   });
 
   describe('NotificationModel', () => {
-    it('should have findByUserId method', () => {
-      expect(typeof NotificationModel.findByUserId).toBe('function');
+    it('should have findAllByUser method', () => {
+      expect(typeof NotificationModel.findAllByUser).toBe('function');
     });
 
     it('should have create method', () => {
@@ -136,8 +136,8 @@ describe('Models - Generic Tests', () => {
       expect(typeof MediaModel.findById).toBe('function');
     });
 
-    it('should have delete method', () => {
-      expect(typeof MediaModel.delete).toBe('function');
+    it('should have findByPublicId method', () => {
+      expect(typeof MediaModel.findByPublicId).toBe('function');
     });
   });
 

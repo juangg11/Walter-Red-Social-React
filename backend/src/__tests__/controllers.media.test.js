@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mediaController } from '../controllers/media.controller.js';
 import { mediaService } from '../services/media.service.js';
 
@@ -9,9 +9,11 @@ describe('mediaController', () => {
 
   beforeEach(() => {
     mockReq = {
-      body: {},
+      body: {
+        folder: 'posts',
+        resource_type: 'image',
+      },
       user: { id: '123' },
-      file: { buffer: Buffer.from('test') },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
@@ -20,27 +22,33 @@ describe('mediaController', () => {
     vi.clearAllMocks();
   });
 
-  describe('upload', () => {
-    it('should upload media', async () => {
-      const mockUploaded = { id: 1, url: 'http://example.com/media.jpg' };
-      mediaService.upload.mockResolvedValue(mockUploaded);
+  describe('signature', () => {
+    it('should generate media signature', async () => {
+      const mockSignature = { signature: 'abc123signature', timestamp: 12345678 };
+      mediaService.createSignature.mockReturnValue(mockSignature);
 
-      await mediaController.upload(mockReq, mockRes);
+      await mediaController.signature(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith(mockUploaded);
+      expect(mediaService.createSignature).toHaveBeenCalled();
+      expect(mockRes.json).toHaveBeenCalledWith(mockSignature);
     });
   });
 
-  describe('delete', () => {
-    it('should delete media', async () => {
-      mockReq.params = { id: '1' };
-      mediaService.delete.mockResolvedValue(undefined);
+  describe('commit', () => {
+    it('should commit uploaded media', async () => {
+      mockReq.body = {
+        public_id: 'my_public_id',
+        secure_url: 'http://example.com/media.jpg',
+        resource_type: 'image',
+      };
+      const mockCommitted = { id: 1, secure_url: 'http://example.com/media.jpg' };
+      mediaService.commit.mockResolvedValue(mockCommitted);
 
-      await mediaController.delete(mockReq, mockRes);
+      await mediaController.commit(mockReq, mockRes);
 
-      expect(mockRes.json).toHaveBeenCalled();
+      expect(mediaService.commit).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockCommitted);
     });
   });
 });
-

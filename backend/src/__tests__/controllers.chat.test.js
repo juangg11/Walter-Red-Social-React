@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { chatController } from '../controllers/chat.controller.js';
 import { chatService } from '../services/chat.service.js';
 
@@ -12,6 +12,9 @@ describe('chatController', () => {
       params: {},
       body: {},
       user: { id: '123' },
+      app: {
+        get: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
@@ -20,40 +23,41 @@ describe('chatController', () => {
     vi.clearAllMocks();
   });
 
-  describe('getConversations', () => {
+  describe('list', () => {
     it('should get user conversations', async () => {
       const mockConversations = [{ id: 1, name: 'Chat 1' }];
-      chatService.getConversations.mockResolvedValue(mockConversations);
+      chatService.list.mockResolvedValue(mockConversations);
 
-      await chatController.getConversations(mockReq, mockRes);
+      await chatController.list(mockReq, mockRes);
 
       expect(mockRes.json).toHaveBeenCalledWith(mockConversations);
     });
   });
 
-  describe('getMessages', () => {
+  describe('messages', () => {
     it('should get conversation messages', async () => {
-      mockReq.params = { id: '1' };
+      mockReq.params = { chatId: '1' };
       const mockMessages = [{ id: 1, contenido: 'Message' }];
-      chatService.getMessages.mockResolvedValue(mockMessages);
+      chatService.messages.mockResolvedValue(mockMessages);
 
-      await chatController.getMessages(mockReq, mockRes);
+      await chatController.messages(mockReq, mockRes);
 
       expect(mockRes.json).toHaveBeenCalledWith(mockMessages);
     });
   });
 
-  describe('createMessage', () => {
+  describe('send', () => {
     it('should create a message', async () => {
-      mockReq.body = { contenido: 'Hello', conversation_id: 1 };
+      mockReq.params = { chatId: '1' };
+      mockReq.body = { contenido: 'Hello' };
       const mockCreated = { id: 1, contenido: 'Hello' };
-      chatService.createMessage.mockResolvedValue(mockCreated);
+      chatService.send.mockResolvedValue(mockCreated);
+      chatService.participantIds.mockResolvedValue(['123', '456']);
 
-      await chatController.createMessage(mockReq, mockRes);
+      await chatController.send(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith(mockCreated);
     });
   });
 });
-

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { comentariosController } from '../controllers/comentarios.controller.js';
 import { comentariosService } from '../services/comentarios.service.js';
 
@@ -10,8 +10,9 @@ describe('comentariosController', () => {
   beforeEach(() => {
     mockReq = {
       params: {},
+      query: {},
       body: {},
-      user: { id: '123' },
+      user: { id: '123', username: 'testuser' },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
@@ -20,12 +21,13 @@ describe('comentariosController', () => {
     vi.clearAllMocks();
   });
 
-  describe('getAll', () => {
+  describe('getByPublicacion', () => {
     it('should get all comments', async () => {
+      mockReq.query = { publicacion_id: '1' };
       const mockComments = [{ id: 1, contenido: 'Test comment' }];
-      comentariosService.getAll.mockResolvedValue(mockComments);
+      comentariosService.getByPublicacion.mockResolvedValue(mockComments);
 
-      await comentariosController.getAll(mockReq, mockRes);
+      await comentariosController.getByPublicacion(mockReq, mockRes);
 
       expect(mockRes.json).toHaveBeenCalledWith(mockComments);
     });
@@ -55,4 +57,3 @@ describe('comentariosController', () => {
     });
   });
 });
-

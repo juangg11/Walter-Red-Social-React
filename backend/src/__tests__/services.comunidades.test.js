@@ -40,12 +40,12 @@ describe('comunidadesService', () => {
     it('should join a community', async () => {
       CommunityModel.findById.mockResolvedValue({ id: 1 });
       CommunityModel.isMember.mockResolvedValue(false);
-      CommunityModel.join.mockResolvedValue(undefined);
-      CommunityModel.findById.mockResolvedValueOnce({ id: 1, nombre: 'Community' });
+      CommunityModel.addMember.mockResolvedValue(undefined);
+      CommunityModel.incrementMembers.mockResolvedValue(undefined);
 
-      const result = await comunidadesService.join(1, '123');
+      await comunidadesService.join(1, '123');
 
-      expect(result).toBeDefined();
+      expect(CommunityModel.addMember).toHaveBeenCalledWith(1, '123');
     });
 
     it('should throw error if community not found', async () => {
