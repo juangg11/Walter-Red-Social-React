@@ -1,4 +1,3 @@
-/* Contenedor Principal de la Landing Page */
 .landingPage {
   min-height: 100vh;
   display: flex;
@@ -12,7 +11,6 @@
   box-sizing: border-box;
 }
 
-/* Luces Cinéticas Traseras (Efecto Aurora) */
 .auroraGlow1 {
   position: absolute;
   top: -10%;
@@ -35,7 +33,6 @@
   pointer-events: none;
 }
 
-/* Área Central Layout */
 .mainContent {
   flex: 1;
   display: flex;
@@ -45,7 +42,6 @@
   z-index: 2;
 }
 
-/* REJILLA HERO (Asimétrica y Adaptativa) */
 .heroGrid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -56,7 +52,6 @@
   gap: 4rem;
 }
 
-/* Columna Izquierda: Mensajes con Entrada Escalonada */
 .heroLeft {
   text-align: left;
   display: flex;
@@ -92,7 +87,6 @@
   font-weight: 700;
 }
 
-/* Columna Derecha: El Escenario de la W Gigante */
 .heroRight {
   display: flex;
   align-items: center;
@@ -105,38 +99,32 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* Corrección del contenedor para asegurar que no mutile la sombra ni el padding */
 .giantLogoContainer {
   position: relative;
   display: inline-block;
   user-select: none;
-  overflow: visible; /* Forzamos a que se vea todo el desborde de efectos */
-  padding: 1rem;     /* Margen de seguridad extra al contenedor */
+  overflow: visible; 
+  padding: 1rem;  
 }
 
-/* LA "W" GIGANTE MODIFICADA CON PADDING DE SEGURIDAD */
 .textLogoMark {
   font-size: clamp(14rem, 24vw, 26rem);
   font-weight: 900;
   font-family: 'Montserrat', 'Arial Black', system-ui, sans-serif;
   display: block;
   
-  /* Ajuste de línea y espacio: subimos un poco el line-height para evitar cortes arriba/abajo */
   line-height: 0.9; 
   letter-spacing: -12px;
 
-  /* --- EL TRUCO DE PADDING --- */
-  /* Añadimos padding a la derecha y abajo para que la W y su sombra tengan espacio para renderizarse completas */
   padding-right: 3rem; 
   padding-bottom: 2rem;
-  margin-right: -3rem; /* Compensamos el padding para que no empuje el diseño hacia la izquierda */
+  margin-right: -3rem;
 
-  /* Gradiente lineal reflectante */
   background: linear-gradient(
     to right,
     var(--text-primary) 0%,
     var(--primary) 25%,
-    #ff7300 50%,
+    #aa0e4a 50%,
     var(--primary) 75%,
     var(--text-primary) 100%
   );
@@ -145,15 +133,12 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 
-  /* Animación constante hacia la izquierda */
   animation: unidirectionalShimmer 4s linear infinite;
   
-  /* Sombra ambiental reactiva */
   filter: drop-shadow(0 15px 40px rgba(255, 69, 0, 0.25))
           drop-shadow(0 0 80px rgba(255, 115, 0, 0.15));
 }
 
-/* Desplazamiento matemático idóneo para simular bucle infinito en el mismo sentido */
 @keyframes unidirectionalShimmer {
   0% {
     background-position: 0% center;
@@ -163,7 +148,6 @@
   }
 }
 
-/* Botones con Microinteracciones Premium */
 .actionButtons {
   display: flex;
   gap: 1.25rem;
@@ -218,7 +202,6 @@
   transform: translateY(-1px);
 }
 
-/* --- INTERFAZ FOOTER Y COMPLEMENTOS --- */
 .landingFooter {
   padding: 1.5rem max(1.5rem, 4vw);
   border-top: 1px solid var(--border-light);
@@ -257,7 +240,6 @@
   margin: 0;
 }
 
-/* Drawer Desplegable Inferior */
 .infoDrawer {
   background-color: var(--bg-primary);
   border-top: 3px solid var(--primary);
@@ -306,7 +288,6 @@
   cursor: pointer;
 }
 
-/* --- COMPONENTE MODAL PREMIUM --- */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -382,7 +363,6 @@
   margin: 0;
 }
 
-/* Estructura Formulario de Entrada */
 .form {
   margin-bottom: 1.75rem;
 }
@@ -485,7 +465,6 @@
   text-decoration: underline;
 }
 
-/* --- RESPONSIVIDAD ADAPTATIVA (PANTALLAS MEDIANAS Y MÓVILES) --- */
 @media (max-width: 968px) {
   .heroGrid {
     grid-template-columns: 1fr;
@@ -495,11 +474,11 @@
   .heroLeft {
     align-items: center;
     text-align: center;
-    order: 2; /* El texto va abajo en móviles */
+    order: 2;
   }
   .heroRight {
     justify-content: center;
-    order: 1; /* El logo gigante corona la pantalla arriba */
+    order: 1;
   }
   .textLogoMark {
     font-size: clamp(10rem, 35vw, 15rem);
