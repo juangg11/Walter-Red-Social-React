@@ -12,7 +12,8 @@
     "db:migrate": "node scripts/migrate.js",
     "db:upgrade": "node scripts/upgrade.js",
     "db:seed": "node db/seed.js",
-    "db:seed:mega": "node db/seed.js"
+    "db:seed:mega": "node db/seed.js",
+    "swagger": "node swagger.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.22.3",
+    "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^14.0.0",
