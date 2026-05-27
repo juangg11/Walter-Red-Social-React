@@ -11,7 +11,6 @@ import SettingsPage from './pages/SettingsPage';
 import UserPage from './pages/UserPage';
 import request, { getChatSocketUrl } from './api/client';
 import styles from './App.module.css';
-import AdminPage from './pages/AdminPage';
 
 const DEFAULT_SETTINGS = {
   theme: 'light',
@@ -61,7 +60,6 @@ function getActiveTab(pathname) {
   if (pathname.startsWith('/comunidades')) return 'communities';
   if (pathname.startsWith('/u/')) return 'profile';
   if (pathname.startsWith('/settings')) return 'settings';
-  if (pathname.startsWith('/admin')) return 'admin';
   return 'feed';
 }
 
