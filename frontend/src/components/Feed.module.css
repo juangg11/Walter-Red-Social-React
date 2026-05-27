@@ -185,6 +185,7 @@
 }
 
 .floatingCreateBtn {
+  will-change: transform;
   position: fixed;
   bottom: 1.875rem;
   right: 1.875rem;
