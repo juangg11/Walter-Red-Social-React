@@ -463,13 +463,12 @@
 }
 
 .guestBtnWrapper {
-  flex-basis: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .guestBtn {
-  margin-top: 1rem;
   background: none;
   border: none;
   color: var(--text-secondary);
