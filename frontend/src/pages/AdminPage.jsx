@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import request from "../api/client";
 import styles from "./AdminPage.module.css";
 
-// Formatea nombres de base de datos (e.g., "user_name" o "createdAt" -> "User Name")
 function formatHeader(str) {
   if (!str) return "";
   const spaced = str.replace(/([A-Z])/g, " $1").replace(/_/g, " ");
@@ -62,13 +61,11 @@ export default function AdminPage() {
     return Array.from(map.values());
   }, [schema]);
 
-  // Extrae las cabeceras reales basadas en los datos recibidos
   const headers = useMemo(() => {
     if (data.length === 0) return [];
     return Object.keys(data[0]);
   }, [data]);
 
-  // Campos que un usuario no técnico NO debería editar manualmente
   const systemFields = ["id", "createdAt", "updatedAt", "v", "_v", "__v"];
 
   async function loadResource(resource) {
@@ -99,7 +96,7 @@ export default function AdminPage() {
   }
 
   async function save(e) {
-    e.preventDefault(); // Evita recarga de página
+    e.preventDefault();
 
     try {
       if (selectedRow) {
@@ -115,7 +112,6 @@ export default function AdminPage() {
         });
         setData((prev) => [...prev, res]);
       }
-      // Resetear estados tras guardar con éxito
       setForm({});
       setSelectedRow(null);
       setShowForm(false);
@@ -140,7 +136,6 @@ export default function AdminPage() {
 
   return (
     <div className={styles.container}>
-      {/* BARRA LATERAL (MÓDULOS) */}
       <div className={styles.sidebar}>
         <div className={styles.logo}>⚙️ Panel de Control</div>
         <p className={styles.sidebarSubtitle}>Módulos editables:</p>
@@ -157,7 +152,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* CONTENIDO PRINCIPAL */}
       <div className={styles.main}>
         {!activeResource ? (
           <div className={styles.welcomeMessage}>
@@ -189,7 +183,6 @@ export default function AdminPage() {
                   <tbody>
                     {data.map((row) => (
                       <tr key={row.id || Math.random()}>
-                        {/* Renderizado seguro: Garantiza que el valor va en la columna correcta */}
                         {headers.map((headerKey) => (
                           <td key={headerKey}>
                             {row[headerKey] !== null && row[headerKey] !== undefined
@@ -212,7 +205,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* FORMULARIO EDITABLE (Se muestra solo si se interactúa) */}
             {showForm && (
               <div className={styles.formContainer}>
                 <div className={styles.formHeader}>
@@ -223,7 +215,7 @@ export default function AdminPage() {
                 <form onSubmit={save} className={styles.adminForm}>
                   <div className={styles.formGrid}>
                     {headers
-                      .filter((field) => !systemFields.includes(field)) // Oculta IDs y fechas del sistema
+                      .filter((field) => !systemFields.includes(field))
                       .map((field) => (
                         <div key={field} className={styles.formGroup}>
                           <label>{formatHeader(field)}</label>
