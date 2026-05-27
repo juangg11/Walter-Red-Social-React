@@ -170,6 +170,15 @@
   border-color: var(--primary);
 }
 
+.modalDeleteBtn {
+  background: #ff4d4f;
+  color: white;
+}
+
+.modalDeleteBtn:hover {
+  background: #d9363e;
+}
+
 .commentForm button {
   background-color: var(--primary);
   color: white;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowBigUp, ArrowBigDown, Repeat2, X } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, Repeat2, X, Trash2 } from 'lucide-react';
 import request from '../api/client';
 import { computeVote } from '../utils/computeVote';
 import styles from './PostModal.module.css';
@@ -39,6 +39,30 @@ export default function PostModal({ post, onClose, onCommentAdded, onPostUpdated
       ignore = true;
     };
   }, [post?.id]);
+
+  async function handleDeleteClick() {
+    const confirmDelete = window.confirm(
+      '¿Seguro que quieres borrar esta publicación?'
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await request(`/publicaciones/${post.id}`, {
+        method: 'DELETE',
+      });
+
+      onClose?.();
+
+      onPostUpdated?.({
+        ...postData,
+        deleted: true,
+      });
+    } catch (e) {
+      console.error('deletePost:', e);
+      alert('No se pudo borrar la publicación');
+    }
+  }
 
   async function handleVote(voteType) {
     const prevPost = postData;
@@ -134,6 +158,10 @@ export default function PostModal({ post, onClose, onCommentAdded, onPostUpdated
           <button className={`${styles.modalVoteBtn} ${postData?.compartido_por_usuario ? styles.modalVoteBtnActive : ''}`} onClick={handleShareClick}>
             <Repeat2 size={18} />
             <span>{postData?.compartido_por_usuario ? 'Compartido' : 'Compartir'}</span>
+          </button>
+          <button className={`${styles.modalDeleteBtn}`} onClick={handleDeleteClick}>
+            <Trash2 size={18} />
+            <span>Borrar</span>
           </button>
         </div>
         {/* Comentarios */}
