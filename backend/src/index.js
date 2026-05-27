@@ -19,12 +19,16 @@ import jwt from 'jsonwebtoken';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const socketsByUser = new Map();
+const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function normalizeOrigin(origin) {
