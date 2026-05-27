@@ -125,11 +125,11 @@ export default function Auth({ onLogin }) {
               <button className={styles.secondaryActionBtn} onClick={() => openAuthModal(false)}>
                 Iniciar sesión
               </button>
-            </motion.div>
-            <motion.div variants={itemVariants} className={styles.guestBtnWrapper}>
-              <button className={styles.guestBtn} onClick={handleGuestLogin} disabled={loading}>
-                {loading ? 'Entrando...' : 'Iniciar como invitado'}
-              </button>
+              <div className={styles.guestBtnWrapper}>
+                <button className={styles.guestBtn} onClick={handleGuestLogin} disabled={loading}>
+                  {loading ? 'Entrando...' : 'Iniciar como invitado'}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
 

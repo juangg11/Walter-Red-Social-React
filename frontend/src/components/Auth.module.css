@@ -138,8 +138,10 @@
 
 .actionButtons {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.25rem;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .primaryActionBtn {
@@ -461,8 +463,9 @@
 }
 
 .guestBtnWrapper {
-  width: 100%;
-  text-align: center;
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .guestBtn {
