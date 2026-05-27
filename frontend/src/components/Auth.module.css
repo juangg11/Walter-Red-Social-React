@@ -460,6 +460,10 @@
   text-decoration: underline;
 }
 
+.guestBtn {
+  margin-top: 10px;
+}
+
 @media (max-width: 968px) {
   .heroGrid {
     grid-template-columns: 1fr;
