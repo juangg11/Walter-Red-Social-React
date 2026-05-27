@@ -137,12 +137,11 @@
 }
 
 .actionButtons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto auto;
   gap: 1.25rem;
-  align-items: center;
-  justify-content: flex-start;
-  width: fit-content; 
+  justify-content: start;
+  width: fit-content;
 }
 
 .primaryActionBtn {
@@ -464,7 +463,7 @@
 }
 
 .guestBtnWrapper {
-  flex-basis: 100%;
+  grid-column: 1 / span 2;
   display: flex;
   justify-content: center;
 }
