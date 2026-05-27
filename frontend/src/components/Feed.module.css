@@ -185,6 +185,7 @@
 }
 
 .floatingCreateBtn {
+  will-change: transform;
   position: fixed;
   bottom: 1.875rem;
   right: 1.875rem;
@@ -200,10 +201,7 @@
   cursor: pointer;
   box-shadow: 0 0.25rem 0.75rem rgba(237, 158, 174, 0.3);
   transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
-  z-index: 9999;
-  transform: translateZ(0);
-  will-change: transform;
-  backface-visibility: hidden;
+  z-index: 100;
 }
 
 .floatingCreateBtn:hover {
