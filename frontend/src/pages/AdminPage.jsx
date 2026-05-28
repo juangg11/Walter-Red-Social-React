@@ -1,20 +1,304 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import request from "../api/client";
 import styles from "./AdminPage.module.css";
 
 function formatHeader(str) {
   if (!str) return "";
-  const spaced = str.replace(/([A-Z])/g, " $1").replace(/_/g, " ");
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1).trim();
+  return str.replace(/([A-Z])/g, " $1").replace(/_/g, " ").trim()
+    .replace(/^\w/, c => c.toUpperCase());
 }
-
-function capitalize(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 function normalizeResource(path) {
   return path.replace("/api/", "").split("/")[0];
+}
+function formatValue(val) {
+  if (val === null || val === undefined) return "—";
+  if (typeof val === "boolean") return val ? "Sí" : "No";
+  if (typeof val === "object") return JSON.stringify(val).slice(0, 60) + "…";
+  const s = String(val);
+  if (s.match(/^\d{4}-\d{2}-\d{2}T/)) return new Date(s).toLocaleString("es-ES", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return s.length > 80 ? s.slice(0, 80) + "…" : s;
+}
+
+const RESOURCE_ICONS = {
+  users: "👤", products: "📦", orders: "🛒", categories: "🗂️",
+  roles: "🔑", settings: "⚙️", reports: "📊", invoices: "🧾",
+  clients: "🏢", payments: "💳", logs: "📋", default: "📁"
+};
+function getIcon(name) {
+  return RESOURCE_ICONS[name?.toLowerCase()] || RESOURCE_ICONS.default;
+}
+
+const systemFields = new Set(["id", "_id", "__v", "createdAt", "updatedAt", "v"]);
+
+const fadeSlideIn = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.18 } }
+};
+const staggerContainer = {
+  animate: { transition: { staggerChildren: 0.055 } }
+};
+const rowVariant = {
+  initial: { opacity: 0, x: -12 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.28, ease: "easeOut" } },
+  exit: { opacity: 0, x: 12, transition: { duration: 0.18 } }
+};
+const drawerVariant = {
+  initial: { opacity: 0, x: 400 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, x: 400, transition: { duration: 0.25, ease: "easeIn" } }
+};
+const overlayVariant = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.22 } },
+  exit: { opacity: 0, transition: { duration: 0.2 } }
+};
+const toastVariant = {
+  initial: { opacity: 0, y: 40, scale: 0.92 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.2 } }
+};
+
+function Toast({ toasts }) {
+  return (
+    <div className={styles.toastContainer}>
+      <AnimatePresence>
+        {toasts.map(t => (
+          <motion.div key={t.id} variants={toastVariant} initial="initial" animate="animate" exit="exit"
+            className={styles.toastItem}
+            style={{
+              background: t.type === "success" ? "#0a3d2b" : t.type === "error" ? "#3d0a0a" : "#1a1a2e",
+              color: t.type === "success" ? "#4ade80" : t.type === "error" ? "#f87171" : "#a5b4fc",
+              border: `1px solid ${t.type === "success" ? "#166534" : t.type === "error" ? "#7f1d1d" : "#312e81"}`
+            }}>
+            <span className={styles.toastIcon}>{t.type === "success" ? "✓" : t.type === "error" ? "✕" : "ℹ"}</span>
+            {t.message}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ConfirmModal({ open, message, onConfirm, onCancel }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div variants={overlayVariant} initial="initial" animate="animate" exit="exit"
+            onClick={onCancel} className={styles.modalOverlay} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.88, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, scale: 0.92, y: -10, transition: { duration: 0.18 } }}
+            className={styles.modalContent}>
+            <div className={styles.modalIcon}>⚠️</div>
+            <h3 className={styles.modalTitle}>Confirmar acción</h3>
+            <p className={styles.modalText}>{message}</p>
+            <div className={styles.modalActions}>
+              <button onClick={onCancel} className={styles.cancelBtn}>Cancelar</button>
+              <button onClick={onConfirm} className={styles.saveBtn} style={{ background: "#dc2626", borderColor: "#dc2626" }}>
+                Sí, eliminar
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function StatCard({ label, value, icon, color = "#4f46e5", delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] } }}
+      whileHover={{ y: -3, transition: { duration: 0.18 } }}
+      className={styles.statCard}>
+      <div className={styles.statIcon} style={{ background: color + "22", border: `1px solid ${color}44` }}>{icon}</div>
+      <div>
+        <div className={styles.statLabel}>{label}</div>
+        <div className={styles.statValue}>{value}</div>
+      </div>
+    </motion.div>
+  );
+}
+
+function SearchBar({ value, onChange, placeholder }) {
+  return (
+    <div className={styles.searchContainer}>
+      <span className={styles.searchIcon}>🔍</span>
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={styles.searchInput}
+        onFocus={e => e.target.style.borderColor = "#4f46e5"}
+        onBlur={e => e.target.style.borderColor = "#1f2937"}
+      />
+    </div>
+  );
+}
+
+function Pagination({ page, total, perPage, onChange }) {
+  const totalPages = Math.ceil(total / perPage);
+  if (totalPages <= 1) return null;
+  const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+    if (totalPages <= 7) return i + 1;
+    if (i === 0) return 1;
+    if (i === 6) return totalPages;
+    if (page <= 4) return i + 1;
+    if (page >= totalPages - 3) return totalPages - 6 + i;
+    return page - 3 + i;
+  });
+  return (
+    <div className={styles.paginationContainer}>
+      <button onClick={() => onChange(page - 1)} disabled={page === 1}
+        className={styles.paginBtn} style={{ opacity: page === 1 ? 0.35 : 1 }}>←</button>
+      {pages.map((p, i) => (
+        <button key={i} onClick={() => p !== "…" && onChange(p)}
+          className={`${styles.paginBtn} ${p === page ? styles.paginActive : ""}`} style={{ cursor: p === "…" ? "default" : "pointer" }}>
+          {p}
+        </button>
+      ))}
+      <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
+        className={styles.paginBtn} style={{ opacity: page === totalPages ? 0.35 : 1 }}>→</button>
+      <span className={styles.paginationInfo}>
+        {((page - 1) * perPage) + 1}–{Math.min(page * perPage, total)} de {total}
+      </span>
+    </div>
+  );
+}
+
+function DrawerForm({ open, selectedRow, headers, form, setForm, onSave, onClose, resourceName }) {
+  const editableHeaders = useMemo(() => headers.filter(h => !systemFields.has(h)), [headers]);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaving(true);
+    await onSave(e);
+    setSaving(false);
+  }
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div variants={overlayVariant} initial="initial" animate="animate" exit="exit"
+            onClick={onClose} className={styles.drawerOverlay} />
+          <motion.div variants={drawerVariant} initial="initial" animate="animate" exit="exit"
+            className={styles.drawerPanel}>
+            {/* Drawer header */}
+            <div className={styles.drawerHeader}>
+              <div>
+                <div className={styles.drawerSubtitle}>
+                  {selectedRow ? "Editar" : "Nuevo"} registro
+                </div>
+                <h3 className={styles.drawerTitle}>
+                  {formatHeader(resourceName)}
+                </h3>
+              </div>
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                onClick={onClose} className={styles.drawerCloseBtn}>
+                ✕
+              </motion.button>
+            </div>
+
+            {/* Drawer body */}
+            <form onSubmit={handleSave} className={styles.drawerBody}>
+              {selectedRow && (
+                <div className={styles.drawerIdBanner}>
+                  🔒 ID: <span className={styles.drawerIdSpan}>{selectedRow.id}</span>
+                </div>
+              )}
+              {editableHeaders.map((field, i) => (
+                <motion.div key={field}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: i * 0.04, duration: 0.25 } }}>
+                  <label className={styles.drawerLabel}>
+                    {formatHeader(field)}
+                  </label>
+                  {field.toLowerCase().includes("description") || field.toLowerCase().includes("notes") || field.toLowerCase().includes("content") ? (
+                    <textarea
+                      value={form[field] || ""}
+                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                      rows={4}
+                      placeholder={`Ingresa ${formatHeader(field).toLowerCase()}…`}
+                      className={styles.inputStyle} />
+                  ) : field.toLowerCase().includes("password") ? (
+                    <input type="password" value={form[field] || ""}
+                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                      placeholder="••••••••" className={styles.inputStyle} />
+                  ) : field.toLowerCase().includes("email") ? (
+                    <input type="email" value={form[field] || ""}
+                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                      placeholder="correo@ejemplo.com" className={styles.inputStyle} />
+                  ) : (
+                    <input type="text" value={form[field] || ""}
+                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                      placeholder={`Ingresa ${formatHeader(field).toLowerCase()}…`}
+                      className={styles.inputStyle} />
+                  )}
+                </motion.div>
+              ))}
+
+              <div className={styles.drawerSubmitContainer}>
+                <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  disabled={saving}
+                  className={`${styles.saveBtn} ${styles.drawerSubmitBtn}`} style={{ opacity: saving ? 0.7 : 1 }}>
+                  {saving ? (
+                    <><LoadingDots />Guardando…</>
+                  ) : (
+                    <>{selectedRow ? "💾 Guardar cambios" : "✨ Crear registro"}</>
+                  )}
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function LoadingDots() {
+  return (
+    <span className={styles.loadingDots}>
+      {[0, 1, 2].map(i => (
+        <motion.span key={i} className={styles.loadingDot}
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+          transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
+      ))}
+    </span>
+  );
+}
+
+function BulkActionsBar({ selected, total, onDeleteAll, onClearSelection }) {
+  return (
+    <AnimatePresence>
+      {selected.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+          exit={{ opacity: 0, y: -20, transition: { duration: 0.18 } }}
+          className={styles.bulkBar}>
+          <span className={styles.bulkText}>
+            {selected.length} de {total} seleccionados
+          </span>
+          <div style={{ flex: 1 }} />
+          <button onClick={onClearSelection} className={`${styles.cancelBtn} ${styles.bulkCancelBtn}`}>
+            Deseleccionar
+          </button>
+          <button onClick={onDeleteAll} className={styles.bulkDeleteBtn}>
+            🗑️ Eliminar selección
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
 
 export default function AdminPage() {
@@ -25,6 +309,22 @@ export default function AdminPage() {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(12);
+  const [sortField, setSortField] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [resourceLoading, setResourceLoading] = useState(false);
+
+  const showToast = useCallback((message, type = "success") => {
+    const id = Date.now();
+    setToasts(p => [...p, { id, message, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -32,8 +332,8 @@ export default function AdminPage() {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/swagger.json`);
         const json = await res.json();
         setSchema(json);
-      } catch (error) {
-        console.error("Error cargando esquema:", error);
+      } catch {
+        showToast("No se pudo cargar el esquema de la API.", "error");
       } finally {
         setLoading(false);
       }
@@ -44,205 +344,309 @@ export default function AdminPage() {
   const resources = useMemo(() => {
     if (!schema?.paths) return [];
     const map = new Map();
-
     Object.entries(schema.paths).forEach(([path, methods]) => {
       const resource = normalizeResource(path);
       if (!resource) return;
-
-      if (!map.has(resource)) {
-        map.set(resource, {
-          name: resource,
-          endpoints: [],
-        });
-      }
+      if (!map.has(resource)) map.set(resource, { name: resource, endpoints: [] });
       map.get(resource).endpoints.push({ path, methods });
     });
-
     return Array.from(map.values());
   }, [schema]);
 
-  const headers = useMemo(() => {
-    if (data.length === 0) return [];
-    return Object.keys(data[0]);
-  }, [data]);
+  const headers = useMemo(() => data.length === 0 ? [] : Object.keys(data[0]), [data]);
 
-  const systemFields = ["id", "createdAt", "updatedAt", "v", "_v", "__v"];
+  const filtered = useMemo(() => {
+    let d = [...data];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      d = d.filter(row => Object.values(row).some(v => String(v).toLowerCase().includes(q)));
+    }
+    if (sortField) {
+      d.sort((a, b) => {
+        const av = a[sortField], bv = b[sortField];
+        const cmp = String(av ?? "").localeCompare(String(bv ?? ""), "es", { numeric: true });
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+    return d;
+  }, [data, search, sortField, sortDir]);
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filtered.slice(start, start + perPage);
+  }, [filtered, page, perPage]);
 
   async function loadResource(resource) {
     setActiveResource(resource);
     setSelectedRow(null);
     setForm({});
     setShowForm(false);
-
+    setSearch("");
+    setPage(1);
+    setSortField(null);
+    setSelectedIds([]);
+    setResourceLoading(true);
     try {
       const res = await request(`/${resource}`);
       setData(Array.isArray(res) ? res : res.data || []);
     } catch {
       setData([]);
+      showToast("Error al cargar los datos.", "error");
+    } finally {
+      setResourceLoading(false);
     }
   }
 
   async function remove(id) {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este registro permanentemente?")) return;
-
     try {
-      await request(`/api/${activeResource}/${id}`, {
-        method: "DELETE",
-      });
-      setData((prev) => prev.filter((x) => x.id !== id));
-    } catch (error) {
-      alert("No se pudo eliminar el registro.");
+      await request(`/api/${activeResource}/${id}`, { method: "DELETE" });
+      setData(p => p.filter(x => x.id !== id));
+      setSelectedIds(p => p.filter(x => x !== id));
+      showToast("Registro eliminado correctamente.");
+    } catch {
+      showToast("No se pudo eliminar el registro.", "error");
+    }
+  }
+
+  async function bulkDelete() {
+    try {
+      await Promise.all(selectedIds.map(id => request(`/api/${activeResource}/${id}`, { method: "DELETE" })));
+      setData(p => p.filter(x => !selectedIds.includes(x.id)));
+      showToast(`${selectedIds.length} registros eliminados.`);
+      setSelectedIds([]);
+    } catch {
+      showToast("Error al eliminar registros.", "error");
     }
   }
 
   async function save(e) {
     e.preventDefault();
-
     try {
       if (selectedRow) {
-        const res = await request(`/api/${activeResource}/${selectedRow.id}`, {
-          method: "PUT",
-          body: JSON.stringify(form),
-        });
-        setData((prev) => prev.map((x) => (x.id === selectedRow.id ? res : x)));
+        const res = await request(`/api/${activeResource}/${selectedRow.id}`, { method: "PUT", body: JSON.stringify(form) });
+        setData(p => p.map(x => (x.id === selectedRow.id ? res : x)));
+        showToast("Registro actualizado correctamente.");
       } else {
-        const res = await request(`/api/${activeResource}`, {
-          method: "POST",
-          body: JSON.stringify(form),
-        });
-        setData((prev) => [...prev, res]);
+        const res = await request(`/api/${activeResource}`, { method: "POST", body: JSON.stringify(form) });
+        setData(p => [res, ...p]);
+        showToast("Registro creado exitosamente.");
       }
       setForm({});
       setSelectedRow(null);
       setShowForm(false);
-    } catch (error) {
-      alert("Ocurrió un error al guardar los cambios. Verifica los datos.");
+    } catch {
+      showToast("Ocurrió un error al guardar.", "error");
     }
   }
 
-  function handleEdit(row) {
-    setSelectedRow(row);
-    setForm({ ...row });
-    setShowForm(true);
+  function handleEdit(row) { setSelectedRow(row); setForm({ ...row }); setShowForm(true); }
+  function handleCreateNew() { setSelectedRow(null); setForm({}); setShowForm(true); }
+  function toggleSort(field) {
+    if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDir("asc"); }
+  }
+  function toggleRow(id) {
+    setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  }
+  function toggleAll() {
+    const ids = paginated.map(r => r.id).filter(Boolean);
+    const allSelected = ids.every(id => selectedIds.includes(id));
+    setSelectedIds(allSelected ? selectedIds.filter(id => !ids.includes(id)) : [...new Set([...selectedIds, ...ids])]);
   }
 
-  function handleCreateNew() {
-    setSelectedRow(null);
-    setForm({});
-    setShowForm(true);
+  function exportCSV() {
+    const rows = [headers.join(","), ...filtered.map(row => headers.map(h => JSON.stringify(row[h] ?? "")).join(","))];
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${activeResource}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    showToast("Exportado a CSV correctamente.");
   }
 
-  if (loading) return <div className={styles.loading}>Cargando panel de administración...</div>;
+  if (loading) {
+    return (
+      <div className={`${styles.pageStyle} ${styles.centered}`}>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className={styles.spinner} />
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.sidebar}>
-        <div className={styles.logo}>⚙️ Panel de Control</div>
-        <p className={styles.sidebarSubtitle}>Módulos editables:</p>
-        <div className={styles.menuList}>
-          {resources.map((r) => (
-            <button
-              key={r.name}
-              className={`${styles.resourceBtn} ${activeResource === r.name ? styles.active : ""}`}
+    <div className={styles.pageStyle} style={{ display: "flex" }}>
+      <motion.aside
+        animate={{ width: sidebarCollapsed ? 64 : 240 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className={styles.sidebar}>
+
+        <div className={styles.sidebarLogoContainer} style={{ padding: sidebarCollapsed ? "18px 0" : "22px 20px 16px", justifyContent: sidebarCollapsed ? "center" : "flex-start" }}>
+          <motion.div whileHover={{ rotate: 20 }} className={styles.logoIcon}>⚡</motion.div>
+          <AnimatePresence>
+            {!sidebarCollapsed && (
+              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0, transition: { delay: 0.05 } }} exit={{ opacity: 0, x: -10 }}>
+                <div className={styles.logoTitle}>AdminPanel</div>
+                <div className={styles.logoSubtitle}>ENTERPRISE</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className={styles.resourcesList} style={{ padding: sidebarCollapsed ? "12px 8px" : "12px 10px" }}>
+          {!sidebarCollapsed && (
+            <div className={styles.sidebarSectionTitle}>
+              Módulos
+            </div>
+          )}
+          {resources.map((r, i) => (
+            <motion.button key={r.name}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0, transition: { delay: i * 0.06, duration: 0.28 } }}
+              whileHover={{ x: sidebarCollapsed ? 0 : 3 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => loadResource(r.name)}
-            >
-              📊 {formatHeader(r.name)}
-            </button>
+              title={sidebarCollapsed ? formatHeader(r.name) : undefined}
+              className={styles.resourceBtn}
+              style={{
+                padding: sidebarCollapsed ? "10px 0" : "10px 12px",
+                justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                fontWeight: activeResource === r.name ? 700 : 500,
+                background: activeResource === r.name ? "rgba(79,70,229,0.18)" : "transparent",
+                color: activeResource === r.name ? "#a5b4fc" : "#6b7280",
+                boxShadow: activeResource === r.name ? "inset 0 0 0 1px rgba(99,102,241,0.3)" : "none"
+              }}>
+              <span className={styles.resourceIcon}>{getIcon(r.name)}</span>
+              <AnimatePresence>
+                {!sidebarCollapsed && (
+                  <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1 } }} exit={{ opacity: 0 }}
+                    className={styles.resourceText}>
+                    {formatHeader(r.name)}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {activeResource === r.name && (
+                <motion.div layoutId="activeIndicator"
+                  className={styles.activeIndicator} style={{ left: sidebarCollapsed ? 4 : 0 }} />
+              )}
+            </motion.button>
           ))}
         </div>
-      </div>
 
-      <div className={styles.main}>
-        {!activeResource ? (
-          <div className={styles.welcomeMessage}>
-            <h2>Bienvenido</h2>
-            <p>Por favor, selecciona una tabla en el menú de la izquierda para empezar a gestionar los datos.</p>
+        <div className={styles.collapseContainer}>
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={() => setSidebarCollapsed(p => !p)}
+            className={styles.collapseBtn}>
+            {sidebarCollapsed ? "→" : "← Colapsar"}
+          </motion.button>
+        </div>
+      </motion.aside>
+
+      <main className={styles.mainContainer}>
+
+        <div className={styles.topbar}>
+          <div style={{ flex: 1 }}>
+            <AnimatePresence mode="wait">
+              {activeResource ? (
+                <motion.div key={activeResource} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>
+                  <div className={styles.topbarTitle}>
+                    {getIcon(activeResource)} {formatHeader(activeResource)}
+                  </div>
+                  <div className={styles.topbarSubtitle}>
+                    {filtered.length} registros · Última actualización: {new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <div className={styles.topbarTitle}>Panel de Administración</div>
+                  <div className={styles.topbarSubtitle}>Selecciona un módulo para comenzar</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        ) : (
-          <>
-            <div className={styles.headerRow}>
-              <h2>Gestionando: {formatHeader(activeResource)}</h2>
-              <button className={styles.newBtn} onClick={handleCreateNew}>
-                ➕ Agregar Nuevo Registro
-              </button>
-            </div>
+          <div className={styles.avatar}>A</div>
+        </div>
 
-            {data.length === 0 ? (
-              <div className={styles.noData}>No hay registros guardados en esta tabla todavía.</div>
+        {/* Content */}
+        <div className={styles.contentWrapper}>
+          <AnimatePresence mode="wait">
+            {!activeResource ? (
+              /* Welcome */
+              <motion.div key="welcome" variants={fadeSlideIn} initial="initial" animate="animate" exit="exit">
+                <div className={styles.welcomeHeader}>
+                  <h2 className={styles.welcomeTitle}>
+                    Bienvenido al panel 👋
+                  </h2>
+                  <p className={styles.welcomeSubtitle}>
+                    Selecciona un módulo en la barra lateral para gestionar tus datos.
+                  </p>
+                </div>
+                <motion.div variants={staggerContainer} initial="initial" animate="animate"
+                  className={styles.modulesGrid}>
+                  {resources.map((r, i) => (
+                    <motion.button key={r.name} variants={rowVariant}
+                      whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(79,70,229,0.2)" }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => loadResource(r.name)}
+                      className={styles.moduleCard}>
+                      <div className={styles.moduleCardIcon}>{getIcon(r.name)}</div>
+                      <div className={styles.moduleCardTitle}>{formatHeader(r.name)}</div>
+                      <div className={styles.moduleCardMeta}>{r.endpoints.length} endpoints</div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              </motion.div>
             ) : (
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      {headers.map((h) => (
-                        <th key={h}>{formatHeader(h)}</th>
-                      ))}
-                      <th style={{ textAlign: "center" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((row) => (
-                      <tr key={row.id || Math.random()}>
-                        {headers.map((headerKey) => (
-                          <td key={headerKey}>
-                            {row[headerKey] !== null && row[headerKey] !== undefined
-                              ? String(row[headerKey])
-                              : "—"}
-                          </td>
-                        ))}
-                        <td className={styles.actionCells}>
-                          <button className={styles.editBtn} onClick={() => handleEdit(row)}>
-                            ✏️ Editar
-                          </button>
-                          <button className={styles.deleteBtn} onClick={() => remove(row.id)}>
-                            🗑️ Borrar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {showForm && (
-              <div className={styles.formContainer}>
-                <div className={styles.formHeader}>
-                  <h3>{selectedRow ? "📝 Modificar Registro" : "✨ Crear Nuevo Registro"}</h3>
-                  <button className={styles.closeBtn} onClick={() => setShowForm(false)}>✕</button>
+              <motion.div key={activeResource} variants={fadeSlideIn} initial="initial" animate="animate" exit="exit">
+                {/* [Bloque de cierre estructural añadido para completar el archivo de forma funcional] */}
+                <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+                  <SearchBar value={search} onChange={setSearch} placeholder="Buscar..." />
+                  <button onClick={handleCreateNew} className={styles.saveBtn}>✨ Nuevo</button>
+                  <button onClick={exportCSV} className={styles.cancelBtn}>📥 Exportar CSV</button>
                 </div>
 
-                <form onSubmit={save} className={styles.adminForm}>
-                  <div className={styles.formGrid}>
-                    {headers
-                      .filter((field) => !systemFields.includes(field))
-                      .map((field) => (
-                        <div key={field} className={styles.formGroup}>
-                          <label>{formatHeader(field)}</label>
-                          <input
-                            type="text"
-                            placeholder={`Ingresa ${formatHeader(field).toLowerCase()}...`}
-                            value={form[field] || ""}
-                            onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                          />
-                        </div>
-                      ))}
-                  </div>
+                <BulkActionsBar selected={selectedIds} total={filtered.length} onDeleteAll={bulkDelete} onClearSelection={() => setSelectedIds([])} />
 
-                  <div className={styles.formActions}>
-                    <button type="button" className={styles.cancelBtn} onClick={() => setShowForm(false)}>
-                      Cancelar
-                    </button>
-                    <button type="submit" className={styles.saveBtn}>
-                      💾 Guardar Cambios
-                    </button>
+                {resourceLoading ? (
+                  <div className={styles.centered} style={{ padding: 40 }}><LoadingDots /></div>
+                ) : (
+                  <div style={{ overflowX: "auto", background: "#111827", borderRadius: 8 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid #1f2937" }}>
+                          <th style={{ padding: 12 }}><input type="checkbox" onChange={toggleAll} /></th>
+                          {headers.map(h => (
+                            <th key={h} onClick={() => toggleSort(h)} style={{ padding: 12, cursor: "pointer", color: "#9ca3af" }}>{formatHeader(h)}</th>
+                          ))}
+                          <th style={{ padding: 12, textAlign: "right" }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginated.map(row => (
+                          <tr key={row.id} style={{ borderBottom: "1px solid #1f2937" }}>
+                            <td style={{ padding: 12 }}><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => toggleRow(row.id)} /></td>
+                            {headers.map(h => (
+                              <td key={h} style={{ padding: 12 }}>{formatValue(row[h])}</td>
+                            ))}
+                            <td style={{ padding: 12, textAlign: "right" }}>
+                              <button onClick={() => handleEdit(row)} style={{ background: "none", border: "none", color: "#4f46e5", cursor: "pointer", marginRight: 8 }}>Editar</button>
+                              <button onClick={() => setConfirmDelete({ id: row.id, message: "¿Eliminar registro?" })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer" }}>Eliminar</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                </form>
-              </div>
+                )}
+                <Pagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
+              </motion.div>
             )}
-          </>
-        )}
-      </div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      <DrawerForm open={showForm} selectedRow={selectedRow} headers={headers} form={form} setForm={setForm} onSave={save} onClose={() => setShowForm(false)} resourceName={activeResource} />
+      <ConfirmModal open={!!confirmDelete} message={confirmDelete?.message} onConfirm={() => { remove(confirmDelete.id); setConfirmDelete(null); }} onCancel={() => setConfirmDelete(null)} />
+      <Toast toasts={toasts} />
     </div>
   );
 }
