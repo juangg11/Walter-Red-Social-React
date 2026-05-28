@@ -4,10 +4,21 @@ import { createComentarioDto, listComentariosDto } from '../dtos/comentarios.dto
 
 export const comentariosController = {
 
+  async getAll(req, res) {
+    const data = await comentariosService.getAll();
+    res.json(data);
+  },
+
   async getByPublicacion(req, res) {
     const { publicacion_id } = listComentariosDto(req.query);
-    const data = await comentariosService.getByPublicacion(publicacion_id);
-    res.json(data);
+    if (!publicacion_id) {
+      getAll(req, res);
+      return;
+    }
+    else {
+      const data = await comentariosService.getByPublicacion(publicacion_id);
+      res.json(data);
+    }
   },
 
   async create(req, res) {

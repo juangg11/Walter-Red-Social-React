@@ -5,7 +5,6 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
-router.get('/all', asyncHandler(comentariosController.getAll));
 router.get('/', asyncHandler(comentariosController.getByPublicacion));
 router.post('/', authMiddleware, asyncHandler(comentariosController.create));
 router.delete('/:id', authMiddleware, asyncHandler(comentariosController.remove));
