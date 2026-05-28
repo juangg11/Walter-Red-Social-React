@@ -11,14 +11,13 @@ export const comentariosController = {
 
   async getByPublicacion(req, res) {
     const { publicacion_id } = listComentariosDto(req.query);
+    
     if (!publicacion_id) {
-      getAll(req, res);
-      return;
+      return comentariosController.getAll(req, res);
     }
-    else {
-      const data = await comentariosService.getByPublicacion(publicacion_id);
-      res.json(data);
-    }
+    
+    const data = await comentariosService.getByPublicacion(publicacion_id);
+    return res.json(data);
   },
 
   async create(req, res) {
