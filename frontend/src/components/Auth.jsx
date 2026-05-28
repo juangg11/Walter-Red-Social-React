@@ -17,6 +17,58 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
 };
 
+/**
+ * Validates that a token conforms to the expected JWT format
+ * before it is persisted to browser storage (S8475).
+ */
+function validateToken(token) {
+  if (typeof token !== 'string') return null;
+  const jwtPattern = /^[a-zA-Z0-9\-_=]+\.[a-zA-Z0-9\-_=]+\.[a-zA-Z0-9\-_=]+$/;
+  return jwtPattern.test(token) ? token : null;
+}
+
+/**
+ * Sanitises a user object received from the server so that no
+ * tainted string values are written straight to localStorage (S8475).
+ */
+function sanitizeUserForStorage(userObj) {
+  if (!userObj || typeof userObj !== 'object') return null;
+
+  const sanitizeString = (str) => {
+    if (typeof str !== 'string') return str;
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  };
+
+  return {
+    ...userObj,
+    username: sanitizeString(userObj.username),
+    email: sanitizeString(userObj.email),
+    bio: sanitizeString(userObj.bio),
+    avatar_url: sanitizeString(userObj.avatar_url),
+  };
+}
+
+/**
+ * Persists auth credentials to localStorage after sanitisation.
+ * Returns the sanitised user object so callers can pass it upstream.
+ */
+function persistAuthData(data) {
+  const safeToken = validateToken(data.token);
+  if (!safeToken) throw new Error('Token con formato no válido');
+
+  const safeUser = sanitizeUserForStorage(data.user);
+  if (!safeUser) throw new Error('Datos de usuario no válidos');
+
+  localStorage.setItem('token', safeToken);          // sanitised ✔
+  localStorage.setItem('user', JSON.stringify(safeUser)); // sanitised ✔
+  return safeUser;
+}
+
 export default function Auth({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -35,9 +87,8 @@ export default function Auth({ onLogin }) {
     setLoading(true);
     try {
       const data = await request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onLogin(data.user);
+      const safeUser = persistAuthData(data);
+      onLogin(safeUser);
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
     }
@@ -50,9 +101,8 @@ export default function Auth({ onLogin }) {
     setLoading(true);
     try {
       const data = await request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, username }) });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onLogin(data.user);
+      const safeUser = persistAuthData(data);
+      onLogin(safeUser);
     } catch (err) {
       setError(err.message || 'Error al registrar la cuenta');
     }
@@ -73,9 +123,8 @@ export default function Auth({ onLogin }) {
         method: 'POST',
         body: JSON.stringify({ email: 'invitado@gmail.com', password: '123456' })
       });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onLogin(data.user);
+      const safeUser = persistAuthData(data);
+      onLogin(safeUser);
     } catch (err) {
       setError(err.message || 'Error al iniciar como invitado');
     }

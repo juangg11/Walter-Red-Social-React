@@ -209,7 +209,7 @@ function App() {
     if (!userData) return;
     const sanitizedUser = sanitizeUserObject(userData);
     setUser(sanitizedUser);
-    localStorage.setItem('user', JSON.stringify(sanitizedUser));
+    // localStorage persistence is handled by Auth.jsx's persistAuthData()
   }
 
   function handleLogout() {
