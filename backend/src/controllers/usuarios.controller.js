@@ -9,8 +9,8 @@ export const usuariosController = {
   },
 
   async isAdmin(req, res) {
-    const data = await usuariosService.isAdmin(req.user.id);
-    res.json(data);
+    const isAdmin = await usuariosService.isAdmin(req.user.id);
+    res.json({ isAdmin });
   },
 
   async getProfile(req, res) {

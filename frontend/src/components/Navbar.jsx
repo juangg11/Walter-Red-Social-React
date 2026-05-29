@@ -15,7 +15,7 @@ export default function Navbar({ user, onSearchChange, notificationCount = 0, ac
   async function checkAdminStatus() {
     try {
       const data = await request('/usuarios/isAdmin');
-      setIsAdmin(data);
+      setIsAdmin(data.isAdmin);
     } catch (e) {
       console.error('checkAdminStatus:', e);
     }
