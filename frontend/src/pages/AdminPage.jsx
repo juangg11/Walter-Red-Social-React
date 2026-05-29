@@ -624,7 +624,7 @@ export default function AdminPage() {
                 </motion.div>
               </motion.div>
             ) : (
-              <motion.div key={activeResource} variants={fadeSlideIn} initial="initial" animate="animate" exit="exit">
+                <motion.div key={activeResource} variants={fadeSlideIn} initial="initial" animate="animate" exit="exit" className={styles.resourceContent}>
                 <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
                   <SearchBar value={search} onChange={setSearch} placeholder="Buscar..." />
                   <button onClick={handleCreateNew} className={styles.saveBtn} style={{ display: "flex", alignItems: "center", gap: 6 }}>

@@ -513,6 +513,13 @@
   color: #4b5563;
 }
 
+.resourceContent {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .avatar {
   width: 36px;
   height: 36px;
