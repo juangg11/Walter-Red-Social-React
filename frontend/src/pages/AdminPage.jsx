@@ -23,7 +23,6 @@ import {
   Lock, 
   Save, 
   Plus,
-  Lock, 
   Trash2, 
   Zap, 
   Download 
