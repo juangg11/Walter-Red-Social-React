@@ -104,9 +104,9 @@ function Toast({ toasts }) {
           <motion.div key={t.id} variants={toastVariant} initial="initial" animate="animate" exit="exit"
             className={styles.toastItem}
             style={{
-              background: t.type === "success" ? "#0a3d2b" : t.type === "error" ? "#3d0a0a" : "#1a1a2e",
-              color: t.type === "success" ? "#4ade80" : t.type === "error" ? "#f87171" : "#a5b4fc",
-              border: `1px solid ${t.type === "success" ? "#166534" : t.type === "error" ? "#7f1d1d" : "#312e81"}`
+              background: t.type === "success" ? "var(--bg-tertiary)" : t.type === "error" ? "var(--danger)" : "var(--bg-secondary)",
+              color: t.type === "success" ? "var(--text-primary)" : t.type === "error" ? "#fca5a5" : "var(--text-primary)",
+              border: `1px solid ${t.type === "success" ? "var(--primary)" : t.type === "error" ? "var(--secondary)" : "var(--border-color)"}`
             }}>
             <span className={styles.toastIcon}>
               {t.type === "success" ? <Check size={16} /> : t.type === "error" ? <X size={16} /> : <Info size={16} />}
@@ -136,7 +136,7 @@ function ConfirmModal({ open, message, onConfirm, onCancel }) {
             <p className={styles.modalText}>{message}</p>
             <div className={styles.modalActions}>
               <button onClick={onCancel} className={styles.cancelBtn}>Cancelar</button>
-              <button onClick={onConfirm} className={styles.saveBtn} style={{ background: "#dc2626", borderColor: "#dc2626" }}>
+              <button onClick={onConfirm} className={styles.saveBtn} style={{ background: "var(--danger)", borderColor: "var(--danger)", color: "#fca5a5" }}>
                 Sí, eliminar
               </button>
             </div>
@@ -551,9 +551,9 @@ export default function AdminPage() {
                 padding: sidebarCollapsed ? "10px 0" : "10px 12px",
                 justifyContent: sidebarCollapsed ? "center" : "flex-start",
                 fontWeight: activeResource === r.name ? 700 : 500,
-                background: activeResource === r.name ? "rgba(79,70,229,0.18)" : "transparent",
-                color: activeResource === r.name ? "#a5b4fc" : "#6b7280",
-                boxShadow: activeResource === r.name ? "inset 0 0 0 1px rgba(99,102,241,0.3)" : "none"
+                background: activeResource === r.name ? "var(--bg-tertiary)" : "transparent",
+                color: activeResource === r.name ? "var(--primary)" : "var(--text-secondary)",
+                boxShadow: activeResource === r.name ? `inset 0 0 0 1px var(--border-color)` : "none"
               }}>
               <span className={styles.resourceIcon} style={{ display: "flex", alignItems: "center" }}>{getIcon(r.name)}</span>
               <AnimatePresence>
