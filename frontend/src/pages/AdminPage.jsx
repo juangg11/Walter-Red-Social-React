@@ -597,7 +597,6 @@ export default function AdminPage() {
               )}
             </AnimatePresence>
           </div>
-          <div className={styles.avatar}>A</div>
         </div>
 
         <div className={styles.contentWrapper}>
