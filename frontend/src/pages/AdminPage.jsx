@@ -512,14 +512,18 @@ export default function AdminPage() {
   }
 
   return (
-    <div className={styles.pageStyle} style={{ display: "flex" }}>
+    <div className={styles.pageStyle}>
+      {/* ── Sidebar ── */}
       <motion.aside
         animate={{ width: sidebarCollapsed ? 64 : 240 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         className={styles.sidebar}>
 
-        <div className={styles.sidebarLogoContainer} style={{ padding: sidebarCollapsed ? "18px 0" : "22px 20px 16px", justifyContent: sidebarCollapsed ? "center" : "flex-start" }}>
-          <motion.div whileHover={{ rotate: 20 }} className={styles.logoIcon} style={{ display: "flex", alignItems: "center" }}><Zap size={20} /></motion.div>
+        <div className={styles.sidebarLogoContainer}
+          style={{ padding: sidebarCollapsed ? "18px 0" : "22px 20px 16px", justifyContent: sidebarCollapsed ? "center" : "flex-start" }}>
+          <motion.div whileHover={{ rotate: 20 }} className={styles.logoIcon} style={{ display: "flex", alignItems: "center" }}>
+            <Zap size={20} />
+          </motion.div>
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0, transition: { delay: 0.05 } }} exit={{ opacity: 0, x: -10 }}>
@@ -532,9 +536,7 @@ export default function AdminPage() {
 
         <div className={styles.resourcesList} style={{ padding: sidebarCollapsed ? "12px 8px" : "12px 10px" }}>
           {!sidebarCollapsed && (
-            <div className={styles.sidebarSectionTitle}>
-              Módulos
-            </div>
+            <div className={styles.sidebarSectionTitle}>Módulos</div>
           )}
           {resources.map((r, i) => (
             <motion.button key={r.name}
@@ -576,8 +578,10 @@ export default function AdminPage() {
         </div>
       </motion.aside>
 
+      {/* ── Main ── */}
       <main className={styles.mainContainer}>
 
+        {/* Topbar — fixed height, never scrolls */}
         <div className={styles.topbar}>
           <div style={{ flex: 1 }}>
             <AnimatePresence mode="wait">
@@ -599,10 +603,12 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Content area — fills remaining height, no outer scroll */}
         <div className={styles.contentWrapper}>
           <AnimatePresence mode="wait">
             {!activeResource ? (
-              <motion.div key="welcome" variants={fadeSlideIn} initial="initial" animate="animate" exit="exit">
+              <motion.div key="welcome" variants={fadeSlideIn} initial="initial" animate="animate" exit="exit"
+                className={styles.welcomeScroll}>
                 <div className={styles.welcomeHeader}>
                   <p className={styles.welcomeSubtitle}>
                     Selecciona un módulo para gestionar tus datos.
@@ -610,7 +616,7 @@ export default function AdminPage() {
                 </div>
                 <motion.div variants={staggerContainer} initial="initial" animate="animate"
                   className={styles.modulesGrid}>
-                  {resources.map((r, i) => (
+                  {resources.map((r) => (
                     <motion.button key={r.name} variants={rowVariant}
                       whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(79,70,229,0.2)" }}
                       whileTap={{ scale: 0.97 }}
@@ -623,8 +629,12 @@ export default function AdminPage() {
                 </motion.div>
               </motion.div>
             ) : (
-                <motion.div key={activeResource} variants={fadeSlideIn} initial="initial" animate="animate" exit="exit" className={styles.resourceContent}>
-                <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+              /* Resource view: flex column, table scrolls internally */
+              <motion.div key={activeResource} variants={fadeSlideIn} initial="initial" animate="animate" exit="exit"
+                className={styles.resourceContent}>
+
+                {/* Toolbar row — fixed, never scrolls */}
+                <div className={styles.resourceToolbar}>
                   <SearchBar value={search} onChange={setSearch} placeholder="Buscar..." />
                   <button onClick={handleCreateNew} className={styles.saveBtn} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <Sparkles size={16} /> Nuevo
@@ -636,38 +646,44 @@ export default function AdminPage() {
 
                 <BulkActionsBar selected={selectedIds} total={filtered.length} onDeleteAll={bulkDelete} onClearSelection={() => setSelectedIds([])} />
 
-                {resourceLoading ? (
-                  <div className={styles.centered} style={{ padding: 40 }}><LoadingDots /></div>
-                ) : (
-                  <div style={{ overflowX: "auto", background: "#111827", borderRadius: 8 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+                {/* Scrollable table container — grows to fill remaining space */}
+                <div className={styles.tableWrapper}>
+                  {resourceLoading ? (
+                    <div className={styles.centered} style={{ height: "100%" }}><LoadingDots /></div>
+                  ) : (
+                    <table className={styles.dataTable}>
                       <thead>
-                        <tr style={{ borderBottom: "1px solid #1f2937" }}>
-                          <th style={{ padding: 12 }}><input type="checkbox" onChange={toggleAll} /></th>
+                        <tr>
+                          <th><input type="checkbox" onChange={toggleAll} /></th>
                           {headers.map(h => (
-                            <th key={h} onClick={() => toggleSort(h)} style={{ padding: 12, cursor: "pointer", color: "#9ca3af" }}>{formatHeader(h)}</th>
+                            <th key={h} onClick={() => toggleSort(h)}>{formatHeader(h)}</th>
                           ))}
-                          <th style={{ padding: 12, textAlign: "right" }}>Acciones</th>
+                          <th style={{ textAlign: "right" }}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginated.map(row => (
-                          <tr key={row.id} style={{ borderBottom: "1px solid #1f2937" }}>
-                            <td style={{ padding: 12 }}><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => toggleRow(row.id)} /></td>
+                          <tr key={row.id}>
+                            <td><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => toggleRow(row.id)} /></td>
                             {headers.map(h => (
-                              <td key={h} style={{ padding: 12 }}>{formatValue(row[h])}</td>
+                              <td key={h}>{formatValue(row[h])}</td>
                             ))}
-                            <td style={{ padding: 12, textAlign: "right" }}>
-                              <button onClick={() => handleEdit(row)} style={{ background: "none", border: "none", color: "#4f46e5", cursor: "pointer", marginRight: 8 }}>Editar</button>
-                              <button onClick={() => setConfirmDelete({ id: row.id, message: "¿Eliminar registro?" })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer" }}>Eliminar</button>
+                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                              <button onClick={() => handleEdit(row)} className={styles.actionEditBtn}>Editar</button>
+                              <button onClick={() => setConfirmDelete({ id: row.id, message: "¿Eliminar registro?" })} className={styles.actionDeleteBtn}>Eliminar</button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                )}
-                <Pagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
+                  )}
+                </div>
+
+                {/* Pagination — fixed at bottom */}
+                <div className={styles.paginationRow}>
+                  <Pagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
+                </div>
+
               </motion.div>
             )}
           </AnimatePresence>
