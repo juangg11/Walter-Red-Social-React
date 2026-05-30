@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Bell, ImagePlus, Moon, Pencil, Type, UserRound } from 'lucide-react';
 import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
@@ -249,4 +250,33 @@ function ToggleRow({ title, checked, onChange }) {
     </div>
   );
 }
+
+const settingsShape = PropTypes.shape({
+  textSize: PropTypes.string,
+  contrast: PropTypes.string,
+  reduceMotion: PropTypes.bool,
+  theme: PropTypes.string,
+  notifications: PropTypes.shape({
+    chatToasts: PropTypes.bool,
+    desktopMessages: PropTypes.bool,
+  }).isRequired,
+});
+
+SettingsPage.propTypes = {
+  user: PropTypes.shape({
+    username: PropTypes.string.isRequired,
+    email: PropTypes.string,
+    avatar_url: PropTypes.string,
+    fecha_creacion: PropTypes.string,
+  }).isRequired,
+  settings: settingsShape.isRequired,
+  onSettingsChange: PropTypes.func.isRequired,
+  onUserUpdate: PropTypes.func.isRequired,
+};
+
+ToggleRow.propTypes = {
+  title: PropTypes.string.isRequired,
+  checked: PropTypes.bool,
+  onChange: PropTypes.func.isRequired,
+};
 

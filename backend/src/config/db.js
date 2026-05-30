@@ -1,6 +1,5 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 

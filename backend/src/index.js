@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import fs from 'fs';
+import fs from 'node:fs';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 
@@ -51,12 +51,10 @@ const envAllowedOrigins = (process.env.CLIENT_URL || '')
   .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
-const allowedOrigins = [
-  ...new Set([
-    ...defaultAllowedOrigins.map(normalizeOrigin),
-    ...envAllowedOrigins,
-  ]),
-];
+const allowedOrigins = new Set([
+  ...defaultAllowedOrigins.map(normalizeOrigin),
+  ...envAllowedOrigins,
+]);
 
 const devOriginPattern =
   /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
@@ -71,7 +69,7 @@ app.use(
 
       if (
         !origin ||
-        allowedOrigins.includes(normalized) ||
+        allowedOrigins.has(normalized) ||
         devOriginPattern.test(normalized) ||
         vercelPreviewPattern.test(normalized)
       ) {

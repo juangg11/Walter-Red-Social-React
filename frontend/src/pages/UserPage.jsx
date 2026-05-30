@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { CalendarDays, MessageSquare, UserPlus, UserRoundCheck } from 'lucide-react';
 import request from '../api/client';
 import { PostCard } from '../components/Feed';
@@ -352,4 +353,32 @@ function UserList({ users = [], navigate, emptyText }) {
 function EmptyState({ text }) {
   return <div className={styles.profileEmptyCopy}>{text}</div>;
 }
+
+const idType = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
+
+UserPage.propTypes = {
+  user: PropTypes.shape({
+    id: idType.isRequired,
+  }).isRequired,
+  onUserUpdate: PropTypes.func,
+};
+
+Stat.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+};
+
+UserList.propTypes = {
+  users: PropTypes.arrayOf(PropTypes.shape({
+    id: idType.isRequired,
+    username: PropTypes.string.isRequired,
+    avatar_url: PropTypes.string,
+  })),
+  navigate: PropTypes.func.isRequired,
+  emptyText: PropTypes.string.isRequired,
+};
+
+EmptyState.propTypes = {
+  text: PropTypes.string.isRequired,
+};
 

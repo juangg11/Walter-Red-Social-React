@@ -22,7 +22,7 @@ describe('Auth Component', () => {
     render(<Auth onLogin={mockOnLogin} />);
     expect(screen.getByText('Encuentra tu comunidad.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Comenzar ahora/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Iniciar sesión/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Iniciar sesión$/i })).toBeInTheDocument();
   });
 
   it('opens and closes drawer for Ayuda and Contacto', () => {
@@ -39,7 +39,7 @@ describe('Auth Component', () => {
 
   it('opens login modal and submits successfully', async () => {
     request.mockResolvedValueOnce({
-      token: 'test-jwt-token',
+      token: 'test.header.signature',
       user: { id: 'user-123', username: 'testuser', email: 'test@example.com' },
     });
 
@@ -67,14 +67,14 @@ describe('Auth Component', () => {
         method: 'POST',
         body: JSON.stringify({ email: 'test@example.com', password: 'password123' }),
       });
-      expect(localStorage.setItem).toHaveBeenCalledWith('token', 'test-jwt-token');
+      expect(localStorage.setItem).toHaveBeenCalledWith('token', 'test.header.signature');
       expect(mockOnLogin).toHaveBeenCalledWith({ id: 'user-123', username: 'testuser', email: 'test@example.com' });
     });
   });
 
   it('opens sign up modal and registers successfully', async () => {
     request.mockResolvedValueOnce({
-      token: 'new-jwt-token',
+      token: 'new.header.signature',
       user: { id: 'new-user', username: 'newuser', email: 'new@example.com' },
     });
 
@@ -104,7 +104,7 @@ describe('Auth Component', () => {
         method: 'POST',
         body: JSON.stringify({ email: 'new@example.com', password: 'newpass123', username: 'newuser' }),
       });
-      expect(localStorage.setItem).toHaveBeenCalledWith('token', 'new-jwt-token');
+      expect(localStorage.setItem).toHaveBeenCalledWith('token', 'new.header.signature');
       expect(mockOnLogin).toHaveBeenCalledWith({ id: 'new-user', username: 'newuser', email: 'new@example.com' });
     });
   });
@@ -126,3 +126,4 @@ describe('Auth Component', () => {
     });
   });
 });
+

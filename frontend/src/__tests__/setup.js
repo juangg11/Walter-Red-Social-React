@@ -3,7 +3,7 @@ import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-global.React = React;
+globalThis.React = React;
 
 // Cleanup after each test
 afterEach(() => {
@@ -32,4 +32,4 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
-global.localStorage = localStorageMock;
+globalThis.localStorage = localStorageMock;

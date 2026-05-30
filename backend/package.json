@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage --all",
+    "test:coverage": "vitest run --coverage",
     "dev": "nodemon --ignore schema.sql src/index.js",
     "start": "node src/index.js",
     "db:migrate": "node scripts/migrate.js",

@@ -55,8 +55,8 @@ export default async function request(path, options = {}) {
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { message } }));
+      if (typeof globalThis !== 'undefined') {
+        globalThis.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { message } }));
       }
     }
 
@@ -83,12 +83,12 @@ export function getChatSocketUrl() {
   if (!base) return null;
 
   try {
-    const url = new URL(base, window.location.origin);
+    const url = new URL(base, globalThis.location.origin);
     const host = url.host;
     const hostname = url.hostname;
     
     const isLocalhost = ALLOWED_WS_HOSTS.includes(host) || ALLOWED_WS_HOSTS.includes(hostname);
-    const isCurrentDomain = hostname === window.location.hostname && window.location.hostname !== '' && window.location.protocol === 'https:';
+    const isCurrentDomain = hostname === globalThis.location.hostname && globalThis.location.hostname !== '' && globalThis.location.protocol === 'https:';
     const isAllowed = isLocalhost || isCurrentDomain;
 
     if (!isAllowed) {

@@ -284,27 +284,7 @@ function DrawerForm({ open, selectedRow, headers, form, setForm, onSave, onClose
                   <label className={styles.drawerLabel}>
                     {formatHeader(field)}
                   </label>
-                  {field.toLowerCase().includes("description") || field.toLowerCase().includes("notes") || field.toLowerCase().includes("content") ? (
-                    <textarea
-                      value={form[field] || ""}
-                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-                      rows={4}
-                      placeholder={`Ingresa ${formatHeader(field).toLowerCase()}…`}
-                      className={styles.inputStyle} />
-                  ) : field.toLowerCase().includes("password") ? (
-                    <input type="password" value={form[field] || ""}
-                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-                      placeholder="••••••••" className={styles.inputStyle} />
-                  ) : field.toLowerCase().includes("email") ? (
-                    <input type="email" value={form[field] || ""}
-                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-                      placeholder="correo@ejemplo.com" className={styles.inputStyle} />
-                  ) : (
-                    <input type="text" value={form[field] || ""}
-                      onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-                      placeholder={`Ingresa ${formatHeader(field).toLowerCase()}…`}
-                      className={styles.inputStyle} />
-                  )}
+                  {renderFieldInput(field, form[field], setForm)}
                 </motion.div>
               ))}
 
@@ -338,6 +318,45 @@ function LoadingDots() {
           transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />
       ))}
     </span>
+  );
+}
+
+function renderFieldInput(field, value, setForm) {
+  const lower = field.toLowerCase();
+  const onChange = (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
+
+  if (lower.includes("description") || lower.includes("notes") || lower.includes("content")) {
+    return (
+      <textarea
+        value={value || ""}
+        onChange={onChange}
+        rows={4}
+        placeholder={`Ingresa ${formatHeader(field).toLowerCase()}â€¦`}
+        className={styles.inputStyle} />
+    );
+  }
+
+  if (lower.includes("password")) {
+    return (
+      <input type="password" value={value || ""}
+        onChange={onChange}
+        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className={styles.inputStyle} />
+    );
+  }
+
+  if (lower.includes("email")) {
+    return (
+      <input type="email" value={value || ""}
+        onChange={onChange}
+        placeholder="correo@ejemplo.com" className={styles.inputStyle} />
+    );
+  }
+
+  return (
+    <input type="text" value={value || ""}
+      onChange={onChange}
+      placeholder={`Ingresa ${formatHeader(field).toLowerCase()}â€¦`}
+      className={styles.inputStyle} />
   );
 }
 

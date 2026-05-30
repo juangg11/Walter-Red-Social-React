@@ -68,6 +68,11 @@ export default function Auth({ onLogin }) {
   const [error, setError] = useState('');
 
   const [activeFooterTab, setActiveFooterTab] = useState(null);
+  const submitLabel = loading
+    ? 'Procesando...'
+    : isSignUp
+      ? 'Registrarse y Entrar'
+      : 'Iniciar Sesión';
 
   useEffect(() => {
     document.documentElement.classList.add('authPageActive');
@@ -310,7 +315,7 @@ export default function Auth({ onLogin }) {
                 {error && <p className={styles.errorText}>{error}</p>}
                 
                 <button type="submit" disabled={loading} className={styles.submitBtn}>
-                  {loading ? 'Procesando...' : (isSignUp ? 'Registrarse y Entrar' : 'Iniciar Sesión')}
+                  {submitLabel}
                 </button>
               </form>
               

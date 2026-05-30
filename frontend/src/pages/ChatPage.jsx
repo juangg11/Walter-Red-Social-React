@@ -35,6 +35,28 @@ const messageVariants = {
   }
 };
 
+function extractChatMessage(rawData) {
+  try {
+    const payload = JSON.parse(rawData);
+    if (payload.type !== 'chat:message') return null;
+    const message = payload.message;
+    if (!message?.chat_id) return null;
+    return message;
+  } catch {
+    return null;
+  }
+}
+
+function mergeChatPreview(chat, message) {
+  if (Number(chat.id) !== Number(message.chat_id)) return chat;
+  return {
+    ...chat,
+    ultimo_mensaje: message.contenido || 'Imagen',
+    ultima_imagen: message.media_url || null,
+    ultimo_mensaje_fecha: message.fecha_creacion,
+  };
+}
+
 function ChatAvatar({ src, username, className }) {
   const initials = String(username || '?').slice(0, 2).toUpperCase();
 
@@ -102,27 +124,13 @@ export default function ChatPage({ user }) {
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = event => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type !== 'chat:message') return;
-        const message = payload.message;
-        if (!message?.chat_id) return;
+      const message = extractChatMessage(event.data);
+      if (!message) return;
 
-        setChats(cur => cur.map((chat) => (
-          Number(chat.id) === Number(message.chat_id)
-            ? {
-                ...chat,
-                ultimo_mensaje: message.contenido || 'Imagen',
-                ultima_imagen: message.media_url || null,
-                ultimo_mensaje_fecha: message.fecha_creacion,
-              }
-            : chat
-        )));
+      setChats(cur => cur.map(chat => mergeChatPreview(chat, message)));
 
-        if (Number(activeChat?.id) === Number(message.chat_id)) {
-          setMessages(cur => cur.some(m => m.id === message.id) ? cur : [...cur, message]);
-        }
-      } catch {}
+      if (Number(activeChat?.id) !== Number(message.chat_id)) return;
+      setMessages(cur => cur.some(m => m.id === message.id) ? cur : [...cur, message]);
     };
 
     ws.onerror = () => {};
@@ -280,7 +288,11 @@ export default function ChatPage({ user }) {
                         {message.contenido && <p>{message.contenido}</p>}
                         {message.media_url && (
                           message.media_resource_type === 'video'
-                            ? <video src={message.media_url} controls />
+                            ? (
+                              <video src={message.media_url} controls>
+                                <track kind="captions" />
+                              </video>
+                            )
                             : <img src={message.media_url} alt="Imagen del chat" />
                         )}
                         <button className={styles.messageReplyBtn} onClick={() => setReplyTo(message)}><Reply size={14} /></button>
@@ -315,7 +327,11 @@ export default function ChatPage({ user }) {
                       className={styles.composerImage}
                     >
                       {imageFile?.type?.startsWith('video/')
-                        ? <video src={imageData} controls />
+                        ? (
+                          <video src={imageData} controls>
+                            <track kind="captions" />
+                          </video>
+                        )
                         : <img src={imageData} alt="Vista previa" />}
                       <button onClick={() => { setImageData(''); setImageFile(null); }}>×</button>
                     </motion.div>

@@ -1,40 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import React from 'react';
+import { describe, it, expect } from 'vitest';
 
-// Mock components tests - since we don't have access to actual component code,
-// we create tests that verify the component file exists and exports properly
-
-describe('App Component', () => {
-  it('should verify App component structure', () => {
-    expect(true).toBe(true);
+describe('App Module', () => {
+  it('exports a default component', async () => {
+    const module = await import('../App.jsx');
+    expect(module.default).toBeTypeOf('function');
   });
 });
 
-describe('Frontend Component Tests', () => {
-  describe('Component Rendering', () => {
-    it('should test basic component structure', () => {
-      expect(typeof React).toBe('object');
-    });
-
-    it('should verify React is available', () => {
-      const React = require('react');
-      expect(React).toBeDefined();
-    });
-  });
-
-  describe('Component Imports', () => {
-    it('should verify component files exist', async () => {
-      // Test that modules can be imported
-      const { default: request } = await import('../api/client.js');
-      expect(typeof request).toBe('function');
-    });
-  });
-
-  describe('Utils Tests', () => {
-    it('should verify utility functions are defined', async () => {
-      expect(typeof vi).toBe('object');
-    });
+describe('Client Module', () => {
+  it('exports request as a function', async () => {
+    const { default: request } = await import('../api/client.js');
+    expect(request).toBeTypeOf('function');
   });
 });

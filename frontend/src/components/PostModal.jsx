@@ -142,8 +142,18 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClose?.();
+      }}
+    >
+      <div className={styles.modalContent}>
         <button className={styles.modalClose} onClick={onClose}>
           <X size={24} />
         </button>
@@ -157,7 +167,9 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
           <h1 className={styles.modalPostTitle}>{postData?.titulo}</h1>
 
           {postData?.url_video ? (
-            <video src={postData.url_video} controls />
+            <video src={postData.url_video} controls>
+              <track kind="captions" />
+            </video>
           ) : postData?.url_imagen ? (
             <img src={postData.url_imagen} alt={postData.titulo} />
           ) : null}
