@@ -68,7 +68,7 @@ export default function SettingsPage({ user, settings, onSettingsChange, onUserU
       return;
     }
 
-    if (typeof window === 'undefined' || !('Notification' in window)) {
+    if (typeof globalThis === 'undefined' || !('Notification' in globalThis)) {
       setNotificationStatus('Este navegador no soporta notificaciones del sistema.');
       return;
     }

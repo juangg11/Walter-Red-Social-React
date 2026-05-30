@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
-import http from 'http';
+import http from 'node:http';
 import jwt from 'jsonwebtoken';
 
 import { WebSocketServer } from 'ws';

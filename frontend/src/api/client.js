@@ -2,13 +2,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 const WS_URL = import.meta.env.VITE_WS_URL;
 
 // Definir hosts permitidos de forma estricta
-const ALLOWED_WS_HOSTS = [
+const ALLOWED_WS_HOSTS = new Set([
   'localhost',
   'localhost:3001',
   '127.0.0.1',
   '127.0.0.1:3001',
   'walter-red-social.onrender.com',
-];
+]);
 
 function getToken() {
   const token = localStorage.getItem('token');
@@ -87,7 +87,7 @@ export function getChatSocketUrl() {
     const host = url.host;
     const hostname = url.hostname;
     
-    const isLocalhost = ALLOWED_WS_HOSTS.includes(host) || ALLOWED_WS_HOSTS.includes(hostname);
+    const isLocalhost = ALLOWED_WS_HOSTS.has(host) || ALLOWED_WS_HOSTS.has(hostname);
     const isCurrentDomain = hostname === globalThis.location.hostname && globalThis.location.hostname !== '' && globalThis.location.protocol === 'https:';
     const isAllowed = isLocalhost || isCurrentDomain;
 

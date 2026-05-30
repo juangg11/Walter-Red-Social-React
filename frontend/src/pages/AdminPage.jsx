@@ -360,6 +360,10 @@ function renderFieldInput(field, value, setForm) {
   );
 }
 
+function removeToastById(currentToasts, toastId) {
+  return currentToasts.filter((toast) => toast.id !== toastId);
+}
+
 function BulkActionsBar({ selected, total, onDeleteAll, onClearSelection }) {
   return (
     <AnimatePresence>
@@ -406,7 +410,7 @@ export default function AdminPage() {
 
   const showToast = useCallback((message, type = "success") => {
     const id = Date.now();
-    const removeToast = () => setToasts(prev => prev.filter(toast => toast.id !== id));
+    const removeToast = () => setToasts(prev => removeToastById(prev, id));
     setToasts(p => [...p, { id, message, type }]);
     setTimeout(removeToast, 3500);
   }, []);

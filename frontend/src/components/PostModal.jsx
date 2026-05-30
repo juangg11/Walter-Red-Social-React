@@ -43,7 +43,7 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
   }, [post?.id]);
 
   async function handleDeleteClick() {
-    const confirmDelete = window.confirm(
+    const confirmDelete = globalThis.confirm(
       '¿Seguro que quieres borrar esta publicación?'
     );
 
@@ -141,16 +141,21 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
     }
   }
 
+  const postMediaNode = postData?.url_video
+    ? (
+      <video src={postData.url_video} controls>
+        <track kind="captions" />
+      </video>
+    )
+    : postData?.url_imagen
+      ? <img src={postData.url_imagen} alt={postData.titulo} />
+      : null;
+
   return (
     <div
       className={styles.modalOverlay}
-      role="button"
-      tabIndex={0}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onClose?.();
       }}
     >
       <div className={styles.modalContent}>
@@ -166,13 +171,7 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
           </div>
           <h1 className={styles.modalPostTitle}>{postData?.titulo}</h1>
 
-          {postData?.url_video ? (
-            <video src={postData.url_video} controls>
-              <track kind="captions" />
-            </video>
-          ) : postData?.url_imagen ? (
-            <img src={postData.url_imagen} alt={postData.titulo} />
-          ) : null}
+          {postMediaNode}
 
           <div className={styles.modalPostContent}>{postData?.contenido}</div>
         </div>
@@ -221,11 +220,9 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
           </div>
 
           <div className={styles.commentsList}>
-            {loading ? (
-              <div className={styles.noComments}>Cargando comentarios...</div>
-            ) : comments.length === 0 ? (
-              <div className={styles.noComments}>Sin comentarios aún</div>
-            ) : (
+            {loading && <div className={styles.noComments}>Cargando comentarios...</div>}
+            {!loading && comments.length === 0 && <div className={styles.noComments}>Sin comentarios aún</div>}
+            {!loading && comments.length > 0 && (
               <CommentTree
                 comments={comments}
                 user={user}

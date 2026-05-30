@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import request from '../api/client';
 import styles from './Sidebar.module.css';
 
@@ -38,7 +39,8 @@ export const CommunitiesSidebar = ({ communities = [], selectedCommunities = [],
           const id = String(community.id);
           const isSelected = selectedIds.includes(id);
           return (
-            <div
+            <button
+              type="button"
               key={id}
               onClick={() => toggleCommunity(community)}
               className={`${styles.communityItem} ${isSelected ? styles.communityItemSelected : styles.communityItemNormal}`}
@@ -50,7 +52,7 @@ export const CommunitiesSidebar = ({ communities = [], selectedCommunities = [],
                 onClick={e => e.stopPropagation()}
               />
               <span>w/{community.nombre || 'Comunidad'}</span>
-            </div>
+            </button>
           );
         }) : (
           <p className={styles.emptyText}>No hay comunidades</p>
@@ -92,7 +94,8 @@ export const TrendingSidebar = ({ onPostClick }) => {
       ) : (
         <div className={styles.listContainer}>
           {trending.length > 0 ? trending.map((post, idx) => (
-            <div
+            <button
+              type="button"
               key={post.id}
               onClick={() => onPostClick?.(post)}
               className={styles.trendingItem}
@@ -101,7 +104,7 @@ export const TrendingSidebar = ({ onPostClick }) => {
                 {idx + 1}. {post.titulo || 'Sin título'}
               </p>
               <p className={styles.trendingVotesCount}>{post.votos || 0} votos</p>
-            </div>
+            </button>
           )) : (
             <p className={styles.emptyText}>No hay tendencias</p>
           )}
@@ -109,4 +112,20 @@ export const TrendingSidebar = ({ onPostClick }) => {
       )}
     </div>
   );
+};
+
+const idType = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
+
+CommunitiesSidebar.propTypes = {
+  communities: PropTypes.arrayOf(PropTypes.shape({
+    id: idType.isRequired,
+    nombre: PropTypes.string,
+    es_miembro: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+  })),
+  selectedCommunities: PropTypes.arrayOf(idType),
+  onSelectCommunities: PropTypes.func.isRequired,
+};
+
+TrendingSidebar.propTypes = {
+  onPostClick: PropTypes.func,
 };

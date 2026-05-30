@@ -104,7 +104,7 @@ describe('Frontend Integration Tests', () => {
 
     it('should display error messages', () => {
       const message = 'An error occurred';
-      expect(message).toBeTruthy();
+      expect(message).toBe('An error occurred');
     });
   });
 
@@ -119,7 +119,7 @@ describe('Frontend Integration Tests', () => {
 
     it('should display loading indicators', () => {
       const isLoading = true;
-      expect(isLoading).toBe(true);
+      expect(isLoading).toStrictEqual(true);
     });
   });
 

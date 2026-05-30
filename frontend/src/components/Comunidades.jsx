@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import request from '../api/client';
 import styles from './Comunidades.module.css';
 
@@ -149,7 +150,8 @@ export default function Communities({ user, onCommunityCreated }) {
           const colors = CAT_COLORS[cat] || CAT_COLORS.otro;
           const active = catFilter === cat;
           return (
-            <span
+            <button
+              type="button"
               key={cat}
               onClick={() => setCatFilter(prev => prev === cat ? '' : cat)}
               className={styles.tagItem}
@@ -162,7 +164,7 @@ export default function Communities({ user, onCommunityCreated }) {
               }}
             >
               {cat}
-            </span>
+            </button>
           );
         })}
       </div>
@@ -207,21 +209,31 @@ export default function Communities({ user, onCommunityCreated }) {
       )}
 
       {showModal && (
-        <div onClick={() => setShowModal(false)} className={styles.modalOverlay}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') setShowModal(false);
+          }}
+          className={styles.modalOverlay}
+        >
+          <div className={styles.modalContent}>
             <p className={styles.modalTitle}>Crear comunidad</p>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label className={styles.comunidadesLabel}>Nombre *</label>
-              <input type="text" placeholder="ej. JavaScript" value={mName} onChange={e => { setMName(e.target.value); setMError(''); }} className={styles.comunidadesInput} />
+              <label htmlFor="community-name" className={styles.comunidadesLabel}>Nombre *</label>
+              <input id="community-name" type="text" placeholder="ej. JavaScript" value={mName} onChange={e => { setMName(e.target.value); setMError(''); }} className={styles.comunidadesInput} />
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label className={styles.comunidadesLabel}>Descripción</label>
-              <textarea placeholder="¿De qué trata esta comunidad?" value={mDesc} onChange={e => setMDesc(e.target.value)} rows={3} className={styles.comunidadesInput} style={{ resize: 'none' }} />
+              <label htmlFor="community-desc" className={styles.comunidadesLabel}>Descripción</label>
+              <textarea id="community-desc" placeholder="¿De qué trata esta comunidad?" value={mDesc} onChange={e => setMDesc(e.target.value)} rows={3} className={styles.comunidadesInput} style={{ resize: 'none' }} />
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label className={styles.comunidadesLabel}>Categoría</label>
-              <select value={mCat} onChange={e => setMCat(e.target.value)} className={styles.comunidadesSelect} style={{ width: '100%' }}>
+              <label htmlFor="community-cat" className={styles.comunidadesLabel}>Categoría</label>
+              <select id="community-cat" value={mCat} onChange={e => setMCat(e.target.value)} className={styles.comunidadesSelect} style={{ width: '100%' }}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -238,3 +250,10 @@ export default function Communities({ user, onCommunityCreated }) {
     </div>
   );
 }
+
+Communities.propTypes = {
+  user: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  }).isRequired,
+  onCommunityCreated: PropTypes.func,
+};

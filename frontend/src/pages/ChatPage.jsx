@@ -57,6 +57,13 @@ function mergeChatPreview(chat, message) {
   };
 }
 
+function appendUniqueMessage(currentMessages, message) {
+  for (const current of currentMessages) {
+    if (current.id === message.id) return currentMessages;
+  }
+  return [...currentMessages, message];
+}
+
 function ChatAvatar({ src, username, className }) {
   const initials = String(username || '?').slice(0, 2).toUpperCase();
 
@@ -130,7 +137,7 @@ export default function ChatPage({ user }) {
       setChats(cur => cur.map(chat => mergeChatPreview(chat, message)));
 
       if (Number(activeChat?.id) !== Number(message.chat_id)) return;
-      setMessages(cur => cur.some(m => m.id === message.id) ? cur : [...cur, message]);
+      setMessages(cur => appendUniqueMessage(cur, message));
     };
 
     ws.onerror = () => {};

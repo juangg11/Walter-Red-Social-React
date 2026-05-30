@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
+import PropTypes from 'prop-types';
 import request from '../api/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import styles from './PostCreate.module.css';
@@ -60,16 +61,27 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={handleClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleClose();
+      }}
+    >
+      <div className={styles.modalContent}>
         <button className={styles.modalClose} onClick={handleClose}><X size={24} /></button>
 
         <div className={styles.modalPost}>
           <h2>Crear un nuevo post</h2>
 
           <div className={styles.formField}>
-            <label>Comunidad</label>
+            <label htmlFor="post-community">Comunidad</label>
             <select
+              id="post-community"
               value={selectedCommunity}
               onChange={(e) => setSelectedCommunity(e.target.value)}
               className={`${styles.inputField} ${styles.selectField}`}
@@ -91,8 +103,9 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
           </div>
 
           <div className={styles.formField}>
-            <label>Titulo</label>
+            <label htmlFor="post-title">Titulo</label>
             <input
+              id="post-title"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Titulo del post"
@@ -101,8 +114,9 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
           </div>
 
           <div className={styles.formField}>
-            <label>Contenido</label>
+            <label htmlFor="post-content">Contenido</label>
             <textarea
+              id="post-content"
               value={contenido}
               onChange={(e) => setContenido(e.target.value)}
               placeholder="Que tienes en mente?"
@@ -113,7 +127,7 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
           </div>
 
           <div className={`${styles.formField} ${styles.mediaField}`}>
-            <label>Multimedia (opcional)</label>
+            <label htmlFor="post-media-file">Multimedia (opcional)</label>
             <input
               id="post-media-file"
               type="file"
@@ -155,3 +169,14 @@ export default function PostCreate({ isOpen, onClose, communities = [], onPostCr
     </div>
   );
 }
+
+PostCreate.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  communities: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    nombre: PropTypes.string,
+    es_miembro: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+  })),
+  onPostCreated: PropTypes.func,
+};

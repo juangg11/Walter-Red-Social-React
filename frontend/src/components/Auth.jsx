@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 import request from '../api/client';
 import { Mail, Lock, User, X, MessageSquare, HelpCircle, ArrowRight } from 'lucide-react';
 import styles from './Auth.module.css';
@@ -68,11 +69,9 @@ export default function Auth({ onLogin }) {
   const [error, setError] = useState('');
 
   const [activeFooterTab, setActiveFooterTab] = useState(null);
-  const submitLabel = loading
-    ? 'Procesando...'
-    : isSignUp
-      ? 'Registrarse y Entrar'
-      : 'Iniciar Sesión';
+  let submitLabel = 'Iniciar Sesión';
+  if (loading) submitLabel = 'Procesando...';
+  else if (isSignUp) submitLabel = 'Registrarse y Entrar';
 
   useEffect(() => {
     document.documentElement.classList.add('authPageActive');
@@ -334,3 +333,7 @@ export default function Auth({ onLogin }) {
     </div>
   );
 }
+
+Auth.propTypes = {
+  onLogin: PropTypes.func.isRequired,
+};

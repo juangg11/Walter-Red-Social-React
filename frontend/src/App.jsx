@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
 import PostModal from './components/PostModal';
@@ -37,10 +38,10 @@ function getInitialUser() {
 }
 
 function getInitialSettings() {
-  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  const prefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches;
 
   try {
-    const storedSettings = window.localStorage.getItem('walter-settings');
+    const storedSettings = globalThis.localStorage.getItem('walter-settings');
     if (!storedSettings) {
       return { ...DEFAULT_SETTINGS, theme: prefersDark ? 'dark' : 'light' };
     }
@@ -54,6 +55,26 @@ function getInitialSettings() {
   } catch {
     return { ...DEFAULT_SETTINGS, theme: prefersDark ? 'dark' : 'light' };
   }
+}
+
+function sanitizeString(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#x27;');
+}
+
+function sanitizeUserObject(userObj) {
+  if (!userObj) return null;
+  return {
+    ...userObj,
+    username: sanitizeString(userObj.username),
+    bio: sanitizeString(userObj.bio),
+    avatar_url: sanitizeString(userObj.avatar_url),
+  };
 }
 
 function getActiveTab(pathname) {
@@ -96,7 +117,7 @@ function App() {
     document.body.dataset.motion = settings.reduceMotion ? 'reduced' : 'normal';
     document.documentElement.dataset.textSize = settings.textSize;
     document.documentElement.dataset.motion = settings.reduceMotion ? 'reduced' : 'normal';
-    window.localStorage.setItem('walter-settings', JSON.stringify(settings));
+    globalThis.localStorage.setItem('walter-settings', JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
@@ -156,7 +177,7 @@ function App() {
         });
       }
 
-      if (settings.notifications.desktopMessages && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      if (settings.notifications.desktopMessages && typeof globalThis !== 'undefined' && 'Notification' in globalThis && Notification.permission === 'granted') {
         new Notification(`w/${payload.message.username}`, {
           body: payload.message.contenido,
         });
@@ -170,8 +191,8 @@ function App() {
 
   useEffect(() => {
     if (!chatToast) return undefined;
-    const timer = window.setTimeout(() => setChatToast(null), 4500);
-    return () => window.clearTimeout(timer);
+    const timer = globalThis.setTimeout(() => setChatToast(null), 4500);
+    return () => globalThis.clearTimeout(timer);
   }, [chatToast]);
 
   useEffect(() => {
@@ -180,30 +201,9 @@ function App() {
       navigate('/', { replace: true });
     }
 
-    window.addEventListener('auth:unauthorized', onUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
+    globalThis.addEventListener('auth:unauthorized', onUnauthorized);
+    return () => globalThis.removeEventListener('auth:unauthorized', onUnauthorized);
   }, [navigate]);
-
-  function sanitizeUserObject(userObj) {
-    if (!userObj) return null;
-    
-    const sanitizeString = (str) => {
-      if (typeof str !== 'string') return str;
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;');
-    };
-
-    return {
-      ...userObj,
-      username: sanitizeString(userObj.username),
-      bio: sanitizeString(userObj.bio),
-      avatar_url: sanitizeString(userObj.avatar_url),
-    };
-  }
 
   function handleLogin(userData) {
     if (!userData) return;

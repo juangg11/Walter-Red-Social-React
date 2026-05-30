@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowBigUp, ArrowBigDown, MessageSquare, Plus, Repeat2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import PostModal from './PostModal';
 import PostCreate from './PostCreate';
 import request from '../api/client';
@@ -16,9 +17,26 @@ function formatCommunityName(name) {
 export function PostCard({ post, userVote, onVote, onClick, onShare, onAuthorClick = null }) {
   const communityName = formatCommunityName(post.comunidad_nombre);
   const isShared = Boolean(post.compartido_por_usuario);
+  const mediaNode = post.url_video
+    ? (
+      <video src={post.url_video} controls>
+        <track kind="captions" />
+      </video>
+    )
+    : post.url_imagen
+      ? <img src={post.url_imagen} alt={post.titulo} />
+      : null;
 
   return (
-    <div className={styles.postCard} onClick={onClick}>
+    <div
+      className={styles.postCard}
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick?.();
+      }}
+    >
       <div className={styles.votes}>
         <button
           type="button"
@@ -48,11 +66,7 @@ export function PostCard({ post, userVote, onVote, onClick, onShare, onAuthorCli
         </p>
         <h3>{post.titulo ?? 'Sin título'}</h3>
 
-        {post.url_video ? (
-          <video src={post.url_video} controls />
-        ) : post.url_imagen ? (
-          <img src={post.url_imagen} alt={post.titulo} />
-        ) : null}
+        {mediaNode}
 
         <p>{post.contenido ?? ''}</p>
 
@@ -187,11 +201,9 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
     return matchesSearch && matchesCommunity;
   });
 
-  const emptyMessage = searchQuery
-    ? 'No se encontraron posts con esa búsqueda'
-    : selectedCommunities?.length
-    ? 'No hay posts en las comunidades seleccionadas'
-    : 'Sé el primero en compartir algo en w/Walter';
+  let emptyMessage = 'Sé el primero en compartir algo en w/Walter';
+  if (searchQuery) emptyMessage = 'No se encontraron posts con esa búsqueda';
+  else if (selectedCommunities?.length) emptyMessage = 'No hay posts en las comunidades seleccionadas';
 
   return (
     <>
@@ -260,3 +272,37 @@ function EmptyCard({ children }) {
     </div>
   );
 }
+
+const idType = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
+
+PostCard.propTypes = {
+  post: PropTypes.shape({
+    id: idType.isRequired,
+    comunidad_nombre: PropTypes.string,
+    compartido_por_usuario: PropTypes.bool,
+    votos: PropTypes.number,
+    username: PropTypes.string,
+    titulo: PropTypes.string,
+    url_video: PropTypes.string,
+    url_imagen: PropTypes.string,
+    contenido: PropTypes.string,
+    numero_comentarios: PropTypes.number,
+    comunidad_id: idType,
+  }).isRequired,
+  userVote: PropTypes.string,
+  onVote: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
+  onShare: PropTypes.func,
+  onAuthorClick: PropTypes.func,
+};
+
+Feed.propTypes = {
+  user: PropTypes.shape({ id: idType.isRequired }).isRequired,
+  searchQuery: PropTypes.string,
+  selectedCommunities: PropTypes.arrayOf(idType),
+  communities: PropTypes.arrayOf(PropTypes.object),
+};
+
+EmptyCard.propTypes = {
+  children: PropTypes.node,
+};
