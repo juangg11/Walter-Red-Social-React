@@ -152,12 +152,13 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
       : null;
 
   return (
-    <div
-      className={styles.modalOverlay}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
+    <div className={styles.modalOverlay}>
+      <button
+        type="button"
+        aria-label="Cerrar modal"
+        onClick={() => onClose?.()}
+        className={styles.modalOverlayClose}
+      />
       <div className={styles.modalContent}>
         <button className={styles.modalClose} onClick={onClose}>
           <X size={24} />

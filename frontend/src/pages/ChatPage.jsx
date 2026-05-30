@@ -57,11 +57,31 @@ function mergeChatPreview(chat, message) {
   };
 }
 
+function updateChatsWithMessage(currentChats, message) {
+  const nextChats = [];
+  for (const chat of currentChats) {
+    nextChats.push(mergeChatPreview(chat, message));
+  }
+  return nextChats;
+}
+
 function appendUniqueMessage(currentMessages, message) {
   for (const current of currentMessages) {
     if (current.id === message.id) return currentMessages;
   }
   return [...currentMessages, message];
+}
+
+function buildChatsUpdater(message) {
+  return function chatsUpdater(currentChats) {
+    return updateChatsWithMessage(currentChats, message);
+  };
+}
+
+function buildMessagesUpdater(message) {
+  return function messagesUpdater(currentMessages) {
+    return appendUniqueMessage(currentMessages, message);
+  };
 }
 
 function ChatAvatar({ src, username, className }) {
@@ -134,10 +154,10 @@ export default function ChatPage({ user }) {
       const message = extractChatMessage(event.data);
       if (!message) return;
 
-      setChats(cur => cur.map(chat => mergeChatPreview(chat, message)));
+      setChats(buildChatsUpdater(message));
 
       if (Number(activeChat?.id) !== Number(message.chat_id)) return;
-      setMessages(cur => appendUniqueMessage(cur, message));
+      setMessages(buildMessagesUpdater(message));
     };
 
     ws.onerror = () => {};
