@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import PropTypes from 'prop-types';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
@@ -99,6 +99,7 @@ function App() {
   const navigate = useNavigate();
   const activeTab = getActiveTab(location.pathname);
   const userId = user?.id;
+  const motionMode = settings.reduceMotion ? 'always' : 'never';
 
   async function loadCommunities() {
     if (!userId) return;
@@ -239,82 +240,90 @@ function App() {
     localStorage.setItem('user', JSON.stringify(sanitizedUser));
   }
 
-  if (!user) return <Auth onLogin={handleLogin} />;
+  if (!user) {
+    return (
+      <MotionConfig reducedMotion={motionMode}>
+        <Auth onLogin={handleLogin} />
+      </MotionConfig>
+    );
+  }
 
   return (
-    <div className={styles.appLayout}>
-      <Navbar
-        user={user}
-        onSearchChange={setSearchQuery}
-        notificationCount={notificationCount}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        onLogout={handleLogout}
-        onNotificationsRead={() => setNotificationCount(0)}
-      />
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className={styles.pageContainer}
-        >
-          <Routes location={location}>
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/" element={
-              <HomePage
-                user={user}
-                searchQuery={searchQuery}
-                selectedCommunities={selectedCommunities}
-                setSelectedCommunities={setSelectedCommunities}
-                communities={communities}
-                onPostClick={setSelectedPost}
-              />
-            } />
-            <Route path="/comunidades" element={<CommunitiesPage user={user} onCommunityCreated={loadCommunities} />} />
-            <Route path="/mensajes" element={<ChatPage user={user} />} />
-            <Route path="/u/:username" element={<UserPage user={user} onUserUpdate={handleUserUpdate} />} />
-            <Route
-              path="/settings"
-              element={
-                <SettingsPage
-                  user={user}
-                  settings={settings}
-                  onSettingsChange={handleSettingsChange}
-                  onUserUpdate={handleUserUpdate}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </motion.div>
-      </AnimatePresence>
-
-      {selectedPost && (
-        <PostModal
-          post={selectedPost}
-          onClose={() => setSelectedPost(null)}
+    <MotionConfig reducedMotion={motionMode}>
+      <div className={styles.appLayout}>
+        <Navbar
           user={user}
+          onSearchChange={setSearchQuery}
+          notificationCount={notificationCount}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+          onNotificationsRead={() => setNotificationCount(0)}
         />
-      )}
 
-      {chatToast && (
-        <button
-          type="button"
-          className={styles.chatToast}
-          onClick={() => {
-            setChatToast(null);
-            navigate('/mensajes');
-          }}
-        >
-          <strong>{chatToast.title}</strong>
-          <span>{chatToast.message}</span>
-        </button>
-      )}
-    </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={styles.pageContainer}
+          >
+            <Routes location={location}>
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/" element={
+                <HomePage
+                  user={user}
+                  searchQuery={searchQuery}
+                  selectedCommunities={selectedCommunities}
+                  setSelectedCommunities={setSelectedCommunities}
+                  communities={communities}
+                  onPostClick={setSelectedPost}
+                />
+              } />
+              <Route path="/comunidades" element={<CommunitiesPage user={user} onCommunityCreated={loadCommunities} />} />
+              <Route path="/mensajes" element={<ChatPage user={user} />} />
+              <Route path="/u/:username" element={<UserPage user={user} onUserUpdate={handleUserUpdate} />} />
+              <Route
+                path="/settings"
+                element={
+                  <SettingsPage
+                    user={user}
+                    settings={settings}
+                    onSettingsChange={handleSettingsChange}
+                    onUserUpdate={handleUserUpdate}
+                  />
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+
+        {selectedPost && (
+          <PostModal
+            post={selectedPost}
+            onClose={() => setSelectedPost(null)}
+            user={user}
+          />
+        )}
+
+        {chatToast && (
+          <button
+            type="button"
+            className={styles.chatToast}
+            onClick={() => {
+              setChatToast(null);
+              navigate('/mensajes');
+            }}
+          >
+            <strong>{chatToast.title}</strong>
+            <span>{chatToast.message}</span>
+          </button>
+        )}
+      </div>
+    </MotionConfig>
   );
 }
 
