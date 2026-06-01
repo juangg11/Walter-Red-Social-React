@@ -28,21 +28,22 @@ function sanitizeUserForStorage(userObj) {
   if (!userObj || typeof userObj !== 'object') return null;
 
   const sanitizeString = (str) => {
-    if (typeof str !== 'string') return str;
+    if (typeof str !== 'string') return '';
     return str
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#x27;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
   };
 
   return {
-    ...userObj,
+    id: Number.isFinite(Number(userObj.id)) ? Number(userObj.id) : 0,
     username: sanitizeString(userObj.username),
     email: sanitizeString(userObj.email),
     bio: sanitizeString(userObj.bio),
     avatar_url: sanitizeString(userObj.avatar_url),
+    is_admin: Number(userObj.is_admin) === 1 ? 1 : 0,
   };
 }
 

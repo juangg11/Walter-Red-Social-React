@@ -1,7 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL;
 const WS_URL = import.meta.env.VITE_WS_URL;
 
-// Definir hosts permitidos de forma estricta
 const ALLOWED_WS_HOSTS = new Set([
   'localhost',
   'localhost:3001',
