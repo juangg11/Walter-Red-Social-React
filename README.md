@@ -2,7 +2,7 @@
 
 TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publicación multimedia y panel de administración basado en OpenAPI.
 
-## 1. Tecnologías (etiquetas)
+## 1. Tecnologías
 
 ### Backend & Base de Datos
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/es/docs/Web/JavaScript)
