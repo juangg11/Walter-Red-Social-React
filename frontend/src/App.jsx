@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import PropTypes from 'prop-types';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
 import PostModal from './components/PostModal';
