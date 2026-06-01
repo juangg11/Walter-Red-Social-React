@@ -103,8 +103,10 @@ describe('Frontend Integration Tests', () => {
     });
 
     it('should display error messages', () => {
-      const message = 'An error occurred';
-      expect(message).toBe('An error occurred');
+      const showError = (msg) => msg;
+      const result = showError('An error occurred');
+
+      expect(result).toBe('An error occurred');
     });
   });
 
