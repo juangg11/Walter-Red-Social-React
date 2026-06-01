@@ -9,11 +9,11 @@ TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publi
 [![NodeJS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express5](https://img.shields.io/badge/Express_5-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![MySQL8](https://img.shields.io/badge/MySQL_8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/es/docs/Web/API/WebSockets_API)
 
-### Seguridad & Tiempo Real
+### Seguridad
 [![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON-web-tokens&logoColor=white)](https://jwt.io/)
 [![bcrypt](https://img.shields.io/badge/bcrypt-430098?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/bcrypt)
-[![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/es/docs/Web/API/WebSockets_API)
 
 ### Frontend & UI
 [![React19](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -24,7 +24,6 @@ TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publi
 
 ### Testing & Calidad de Código
 [![Vitest](https://img.shields.io/badge/Vitest-7B9B49?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
-[![TestingLibrary](https://img.shields.io/badge/Testing_Library-E33332?style=for-the-badge&logo=testing-library&logoColor=white)](https://testing-library.com/)
 [![SonarCloud](https://img.shields.io/badge/SonarCloud-F3702A?style=for-the-badge&logo=sonarcloud&logoColor=white)](https://sonarcloud.io/)
 [![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 
