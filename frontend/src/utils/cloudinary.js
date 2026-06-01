@@ -6,7 +6,7 @@ export async function uploadToCloudinary(file, folder) {
     body: JSON.stringify({ folder }),
   });
 
-  if (!sig || !sig.cloudName) {
+  if (!sig?.cloudName) {
     throw new Error('No se pudo obtener la configuración de Cloudinary.');
   }
 
