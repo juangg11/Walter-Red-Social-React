@@ -28,7 +28,7 @@ function sanitizeUserForStorage(userObj) {
   if (!userObj || typeof userObj !== 'object') return null;
 
   const sanitizeString = (str) => {
-    if (typeof str !== 'string') return '';
+    if (typeof str !== 'string') return str;
     return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -37,14 +37,16 @@ function sanitizeUserForStorage(userObj) {
       .replace(/'/g, '&#x27;');
   };
 
-  return {
-    id: Number.isFinite(Number(userObj.id)) ? Number(userObj.id) : 0,
-    username: sanitizeString(userObj.username),
-    email: sanitizeString(userObj.email),
-    bio: sanitizeString(userObj.bio),
-    avatar_url: sanitizeString(userObj.avatar_url),
-    is_admin: Number(userObj.is_admin) === 1 ? 1 : 0,
-  };
+  const sanitizedUser = {};
+
+  for (const [key, value] of Object.entries(userObj)) {
+    sanitizedUser[key] =
+      typeof value === 'string'
+        ? sanitizeString(value)
+        : value;
+  }
+
+  return sanitizedUser;
 }
 
 function persistAuthData(data) {
