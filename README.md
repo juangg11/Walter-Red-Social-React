@@ -1,6 +1,9 @@
 # Walter Red Social
 
-TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publicación multimedia y panel de administración basado en OpenAPI.
+## Análisis SonarQube
+![Maintainability](https://img.shields.io/badge/Maintainability-A-brightgreen)
+![Reliability](https://img.shields.io/badge/Reliability-A-brightgreen)
+![Security](https://img.shields.io/badge/Security-A-brightgreen)
 
 ## 1. Tecnologías
 
@@ -11,21 +14,12 @@ TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publi
 [![MySQL8](https://img.shields.io/badge/MySQL_8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/es/docs/Web/API/WebSockets_API)
 
-### Seguridad
-[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON-web-tokens&logoColor=white)](https://jwt.io/)
-[![bcrypt](https://img.shields.io/badge/bcrypt-430098?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/bcrypt)
-
 ### Frontend & UI
 [![React19](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![ReactRouter7](https://img.shields.io/badge/React_Router_7-CA4245?style=for-the-badge&logo=react-router&logoColor=white)](https://reactrouter.com/)
 [![FramerMotion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
 [![LucideReact](https://img.shields.io/badge/Lucide_React-F59E0B?style=for-the-badge&logo=lucide&logoColor=white)](https://lucide.dev/)
-
-### Testing & Calidad de Código
-[![Vitest](https://img.shields.io/badge/Vitest-7B9B49?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
-[![SonarCloud](https://img.shields.io/badge/SonarCloud-F3702A?style=for-the-badge&logo=sonarcloud&logoColor=white)](https://sonarcloud.io/)
-[![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 
 ### DevOps & Despliegue
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
@@ -34,18 +28,18 @@ TFG de red social tipo comunidad-foro con tiempo real, autenticación JWT, publi
 [![Aiven](https://img.shields.io/badge/Aiven-FF4F00?style=for-the-badge&logo=aiven&logoColor=white)](https://aiven.io/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
+### Testing & Calidad de Código
+[![Vitest](https://img.shields.io/badge/Vitest-7B9B49?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![SonarCloud](https://img.shields.io/badge/SonarCloud-F3702A?style=for-the-badge&logo=sonarcloud&logoColor=white)](https://sonarcloud.io/)
+[![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
+
+### Seguridad
+[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON-web-tokens&logoColor=white)](https://jwt.io/)
+[![bcrypt](https://img.shields.io/badge/bcrypt-430098?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/bcrypt)
+
 ## 2. Qué es el producto
 
-Walter es una plataforma social en la que los usuarios:
-
-- se registran o inician sesión,
-- crean y se unen a comunidades,
-- publican posts con texto e imagen/vídeo,
-- votan y comparten publicaciones,
-- comentan (con hilos de respuesta),
-- siguen a otros usuarios,
-- chatean en tiempo real con WebSocket,
-- gestionan perfil, accesibilidad y notificaciones.
+Walter es una red social basada en comunidades y foros con interacción en tiempo real mediante WebSockets. Permite a los usuarios registrarse e iniciar sesión, crear y unirse a comunidades, publicar contenido con texto, imágenes o vídeos, votar y compartir publicaciones, comentar con respuestas anidadas, seguir a otros usuarios y chatear en tiempo real. Además, incluye gestión de perfil, notificaciones y opciones de accesibilidad. Está desarrollada con el stack MERN (React, Node.js, Express) junto con MySQL, siguiendo una arquitectura escalable orientada a la gestión eficiente de contenido y datos multimedia.
 
 Además, incluye un panel de administración que consume el esquema OpenAPI (Swagger) para explorar recursos.
 
@@ -233,7 +227,7 @@ Walter/
 
 ---
 
-## 11. Backend: documentación archivo por archivo
+## 11. Esquema Backend
 
 ### 11.1 Backend raíz e infraestructura
 
@@ -399,7 +393,7 @@ Walter/
 
 ---
 
-## 12. Frontend: documentación archivo por archivo
+## 12. Esquema Frontend
 
 ### 12.1 Frontend raíz y configuración
 
@@ -473,15 +467,7 @@ Walter/
 | `frontend/src/components/PostModal.jsx` | Modal detalle post: voto, compartir, borrado condicional por ownership, comentarios anidados, respuesta y borrado propio de comentarios. |
 | `frontend/src/components/PostModal.module.css` | Estilos del modal, árbol de comentarios y acciones. |
 
-### 12.7 `frontend/src/assets`
-
-| Archivo | Función |
-|---|---|
-| `frontend/src/assets/hero.png` | Recurso visual de portada/branding. |
-| `frontend/src/assets/react.svg` | Asset generado base de Vite/React. |
-| `frontend/src/assets/vite.svg` | Asset generado base de Vite. |
-
-### 12.8 `frontend/src/__tests__`
+### 12.7 `frontend/src/__tests__`
 
 | Archivo | Cobertura |
 |---|---|
@@ -511,19 +497,7 @@ Walter/
 | `sonar-open-issues.json` | Snapshot local de issues Sonar en formato JSON. |
 | `.github/workflows/sonarcloud.yml` | Pipeline CI para cobertura + análisis SonarCloud. |
 
-## 14. Framer Motion (motion) en el sistema
-
-Se usa en:
-
-- `frontend/src/App.jsx`: transiciones globales entre páginas (`AnimatePresence`) y `MotionConfig` global para `reduceMotion`.
-- `frontend/src/components/Auth.jsx`: entradas/salidas y microanimaciones de landing/modal.
-- `frontend/src/components/Navbar.jsx`: iconos interactivos y badge animado.
-- `frontend/src/pages/ChatPage.jsx`: lista de chats, mensajes, preview media, emoji panel.
-- `frontend/src/pages/AdminPage.jsx`: toasts, overlays, drawer, sidebar, tarjetas, tablas.
-
-Con esto, la animación está integrada sin romper accesibilidad, y el modo de reducción de movimiento se aplica a nivel global de app.
-
-## 15. Estado de calidad y mantenibilidad
+## 14. Estado de calidad y mantenibilidad
 
 - Arquitectura modular y separada por responsabilidades.
 - Cobertura automatizada en backend y frontend con reporte `lcov`.
