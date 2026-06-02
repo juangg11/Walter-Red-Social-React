@@ -10,13 +10,24 @@ function formatCommunityName(name) {
   return String(name).replace(/^w\//i, '');
 }
 
-export default function PostModal({ post, user, onClose, onCommentAdded, onPostUpdated, onPostDeleted, onAuthorClick = null, onShare = null }) {
+export default function PostModal({
+  post,
+  user,
+  onClose,
+  onCommentAdded,
+  onPostUpdated,
+  onPostDeleted,
+  onAuthorClick = null,
+  onShare = null,
+}) {
   const [postData, setPostData] = useState(post);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
   const [userVote, setUserVote] = useState(post.voto_usuario ?? null);
+
   const isPostOwner = String(postData?.usuario_id ?? '') === String(user?.id ?? '');
 
   useEffect(() => {
@@ -29,34 +40,21 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
     let ignore = false;
 
     request(`/comentarios?publicacion_id=${post.id}`)
-      .then(data => {
-        if (!ignore) setComments(data);
-      })
+      .then(data => { if (!ignore) setComments(data); })
       .catch(e => console.error('fetchComments:', e))
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
+      .finally(() => { if (!ignore) setLoading(false); });
 
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [post?.id]);
 
   async function handleDeleteClick() {
-    const confirmDelete = globalThis.confirm(
-      '¿Seguro que quieres borrar esta publicación?'
-    );
-
+    const confirmDelete = globalThis.confirm('¿Seguro que quieres borrar esta publicación?');
     if (!confirmDelete) return;
 
     try {
-      await request(`/publicaciones/${post.id}`, {
-        method: 'DELETE',
-      });
-
+      await request(`/publicaciones/${post.id}`, { method: 'DELETE' });
       onPostDeleted?.(post.id);
       onClose?.();
-
     } catch (e) {
       console.error('deletePost:', e);
       alert('No se pudo borrar la publicación');
@@ -66,22 +64,31 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
   async function handleVote(voteType) {
     const prevPost = postData;
     const prevVote = userVote;
+
     const { nextVote, votes } = computeVote({
       currentVote: userVote,
       voteType,
       votes: postData.votos,
     });
 
-    const updated = { ...postData, votos: votes, voto_usuario: nextVote };
-    setPostData(updated);
+    const optimistic = { ...postData, votos: votes, voto_usuario: nextVote };
+    setPostData(optimistic);
     setUserVote(nextVote);
-    onPostUpdated?.(updated);
 
     try {
-      const result = await request(`/publicaciones/${post.id}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
-      setPostData(result.post || updated);
-      setUserVote(result.voto ?? nextVote);
-    } catch {
+      const result = await request(
+        `/publicaciones/${post.id}/votar`,
+        { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) }
+      );
+
+      const serverPost = result.post ?? { ...postData, votos: result.votos ?? votes, voto_usuario: result.voto ?? nextVote };
+      const serverVote = result.voto !== undefined ? result.voto : nextVote;
+
+      setPostData(serverPost);
+      setUserVote(serverVote);
+      onPostUpdated?.(serverPost);
+    } catch (err) {
+      console.error('handleVote:', err);
       setPostData(prevPost);
       setUserVote(prevVote);
     }
@@ -98,11 +105,18 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
     if (!content.trim()) return;
     setSubmitting(true);
     try {
-      const data = await request('/comentarios', { method: 'POST', body: JSON.stringify({ contenido: content, publicacion_id: post.id, comentario_padre_id: parentId }) });
+      const data = await request('/comentarios', {
+        method: 'POST',
+        body: JSON.stringify({
+          contenido: content,
+          publicacion_id: post.id,
+          comentario_padre_id: parentId,
+        }),
+      });
       setComments(current => [...current, data]);
       if (!parentId) setNewComment('');
       const count = (postData.numero_comentarios ?? 0) + 1;
-      setPostData({ ...postData, numero_comentarios: count });
+      setPostData(prev => ({ ...prev, numero_comentarios: count }));
       onCommentAdded?.(count);
       return data;
     } catch (e) {
@@ -116,21 +130,30 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
   async function handleCommentDeleted(commentId) {
     try {
       const data = await request(`/comentarios/${commentId}`, { method: 'DELETE' });
+
       setComments(current => {
         const removeIds = new Set([String(commentId)]);
         let changed = true;
         while (changed) {
           changed = false;
-          current.forEach(comment => {
-            if (comment.comentario_padre_id && removeIds.has(String(comment.comentario_padre_id)) && !removeIds.has(String(comment.id))) {
-              removeIds.add(String(comment.id));
+          current.forEach(c => {
+            if (
+              c.comentario_padre_id &&
+              removeIds.has(String(c.comentario_padre_id)) &&
+              !removeIds.has(String(c.id))
+            ) {
+              removeIds.add(String(c.id));
               changed = true;
             }
           });
         }
-        return current.filter(comment => !removeIds.has(String(comment.id)));
+        return current.filter(c => !removeIds.has(String(c.id)));
       });
-      const count = Number(data.numero_comentarios ?? Math.max((postData.numero_comentarios ?? comments.length) - 1, 0));
+
+      const count = Number(
+        data.numero_comentarios ??
+        Math.max((postData.numero_comentarios ?? comments.length) - 1, 0)
+      );
       const updated = { ...postData, numero_comentarios: count };
       setPostData(updated);
       onCommentAdded?.(count);
@@ -167,7 +190,14 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
         {/* Post */}
         <div className={styles.modalPost}>
           <div className={styles.modalPostMeta}>
-            Publicado por <button type="button" className={styles.inlineUserLink} onClick={() => onAuthorClick?.(postData?.username)}>{postData?.username ?? 'anon'}</button>
+            Publicado por{' '}
+            <button
+              type="button"
+              className={styles.inlineUserLink}
+              onClick={() => onAuthorClick?.(postData?.username)}
+            >
+              {postData?.username ?? 'anon'}
+            </button>
             {postData?.comunidad_nombre ? ` en w/${formatCommunityName(postData.comunidad_nombre)}` : ''}
           </div>
           <h1 className={styles.modalPostTitle}>{postData?.titulo}</h1>
@@ -186,7 +216,9 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
           >
             <ArrowBigUp size={20} />
           </button>
+
           <span className={styles.modalVoteCount}>{postData?.votos ?? 0}</span>
+
           <button
             className={`${styles.modalVoteBtn} ${userVote === 'down' ? styles.modalVoteBtnActive : ''}`}
             title="Votar negativo"
@@ -194,17 +226,23 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
           >
             <ArrowBigDown size={20} />
           </button>
-          <button className={`${styles.modalVoteBtn} ${postData?.compartido_por_usuario ? styles.modalVoteBtnActive : ''}`} onClick={handleShareClick}>
+
+          <button
+            className={`${styles.modalVoteBtn} ${postData?.compartido_por_usuario ? styles.modalVoteBtnActive : ''}`}
+            onClick={handleShareClick}
+          >
             <Repeat2 size={18} />
             <span>{postData?.compartido_por_usuario ? 'Compartido' : 'Compartir'}</span>
           </button>
+
           {isPostOwner && (
-            <button className={`${styles.modalDeleteBtn}`} onClick={handleDeleteClick}>
+            <button className={styles.modalDeleteBtn} onClick={handleDeleteClick}>
               <Trash2 size={18} />
               <span>Borrar</span>
             </button>
           )}
         </div>
+
         {/* Comentarios */}
         <div className={styles.commentsSection}>
           <h3>Comentarios ({comments.length})</h3>
@@ -215,14 +253,19 @@ export default function PostModal({ post, user, onClose, onCommentAdded, onPostU
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
             />
-            <button onClick={() => addComment()} disabled={submitting || !newComment.trim()}>
+            <button
+              onClick={() => addComment()}
+              disabled={submitting || !newComment.trim()}
+            >
               {submitting ? 'Enviando...' : 'Comentar'}
             </button>
           </div>
 
           <div className={styles.commentsList}>
             {loading && <div className={styles.noComments}>Cargando comentarios...</div>}
-            {!loading && comments.length === 0 && <div className={styles.noComments}>Sin comentarios aún</div>}
+            {!loading && comments.length === 0 && (
+              <div className={styles.noComments}>Sin comentarios aún</div>
+            )}
             {!loading && comments.length > 0 && (
               <CommentTree
                 comments={comments}
@@ -281,14 +324,21 @@ function CommentItem({ comment, repliesByParent, user, onReply, onDelete }) {
         <span>{new Date(comment.fecha_creacion).toLocaleDateString()}</span>
         <button onClick={() => setOpen(v => !v)}>Responder</button>
         {isOwner && (
-          <button onClick={() => onDelete?.(comment.id)} className={styles.commentDeleteBtn}>
+          <button
+            onClick={() => onDelete?.(comment.id)}
+            className={styles.commentDeleteBtn}
+          >
             Borrar
           </button>
         )}
       </div>
       {open && (
         <div className={styles.replyForm}>
-          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Responder comentario" />
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Responder comentario"
+          />
           <button onClick={submitReply} disabled={!text.trim()}>Enviar</button>
         </div>
       )}
@@ -327,9 +377,7 @@ PostModal.propTypes = {
     compartido_por_usuario: PropTypes.bool,
     numero_comentarios: PropTypes.number,
   }).isRequired,
-  user: PropTypes.shape({
-    id: idType,
-  }),
+  user: PropTypes.shape({ id: idType }),
   onClose: PropTypes.func,
   onCommentAdded: PropTypes.func,
   onPostUpdated: PropTypes.func,
@@ -358,4 +406,3 @@ CommentItem.propTypes = {
   onReply: PropTypes.func,
   onDelete: PropTypes.func,
 };
-

@@ -111,4 +111,25 @@ export const PostModel = {
       [userId, postId]
     );
   },
+
+  async recalculateVotes(postId) {
+    await pool.query(`
+      UPDATE publicaciones p
+      SET votos = (
+        SELECT COALESCE(
+          SUM(
+            CASE
+              WHEN v.tipo_voto = 'up' THEN 1
+              WHEN v.tipo_voto = 'down' THEN -1
+              ELSE 0
+            END
+          ),
+          0
+        )
+        FROM votos_usuarios v
+        WHERE v.publicacion_id = p.id
+      )
+      WHERE p.id = ?
+    `, [postId]);
+  },
 };

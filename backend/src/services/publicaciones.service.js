@@ -62,19 +62,19 @@ export const publicacionesService = {
       const votoActual = existing.tipo_voto;
       if (votoActual === tipo_voto) {
         await VoteModel.delete(userId, postId);
-        await PostModel.incrementVotes(postId, tipo_voto === 'up' ? -1 : 1);
+        await PostModel.recalculateVotes(postId);
         const updated = await this.getById(postId, userId);
         return { mensaje: 'Voto eliminado', voto: null, votos: updated.votos, post: updated };
       } else {
         await VoteModel.update(userId, postId, tipo_voto);
-        await PostModel.incrementVotes(postId, tipo_voto === 'up' ? 2 : -2);
+        await PostModel.recalculateVotes(postId);
         const updated = await this.getById(postId, userId);
         return { mensaje: 'Voto actualizado', voto: tipo_voto, votos: updated.votos, post: updated };
       }
     }
 
     await VoteModel.create(userId, postId, tipo_voto);
-    await PostModel.incrementVotes(postId, tipo_voto === 'up' ? 1 : -1);
+    await PostModel.recalculateVotes(postId);
     const updated = await this.getById(postId, userId);
     return { mensaje: 'Voto registrado', voto: tipo_voto, votos: updated.votos, post: updated };
   },

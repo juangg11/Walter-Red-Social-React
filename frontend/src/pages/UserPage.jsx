@@ -35,11 +35,11 @@ export default function UserPage({ user, onUserUpdate }) {
     let ignore = false;
 
     Promise.all([
-        request(`/usuarios/perfil/${username}`),
-        request(`/usuarios/perfil/${username}/publicaciones`),
-        request(`/usuarios/perfil/${username}/comentarios`),
-        request(`/usuarios/perfil/${username}/compartidos`),
-      ])
+      request(`/usuarios/perfil/${username}`),
+      request(`/usuarios/perfil/${username}/publicaciones`),
+      request(`/usuarios/perfil/${username}/comentarios`),
+      request(`/usuarios/perfil/${username}/compartidos`),
+    ])
       .then(([profileData, postsData, commentsData, sharedData]) => {
         if (ignore) return;
 
@@ -56,18 +56,17 @@ export default function UserPage({ user, onUserUpdate }) {
         setUserVotes(voteMap);
       })
       .catch(e => console.error('loadProfilePage:', e))
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
+      .finally(() => { if (!ignore) setLoading(false); });
 
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [username]);
 
   function updatePost(updatedPost) {
     setPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
     setSharedPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
+    if (updatedPost.voto_usuario !== undefined) {
+      setUserVotes(cur => ({ ...cur, [updatedPost.id]: updatedPost.voto_usuario ?? null }));
+    }
   }
 
   function handlePostDeleted(postId) {
@@ -80,22 +79,42 @@ export default function UserPage({ user, onUserUpdate }) {
     const post = [...posts, ...sharedPosts].find(item => item.id === postId);
     if (!post) return;
 
+    const previousPost = { ...post };
+    const previousVote = userVotes[postId] ?? null;
+
     const { nextVote, votes } = computeVote({
-      currentVote: userVotes[postId],
+      currentVote: previousVote,
       voteType,
       votes: post.votos,
     });
 
-    updatePost({ ...post, votos: votes, voto_usuario: nextVote });
+    const optimistic = { ...post, votos: votes, voto_usuario: nextVote };
+    updatePost(optimistic);
     setUserVotes(cur => ({ ...cur, [postId]: nextVote }));
+
     try {
-      const result = await request(`/publicaciones/${postId}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
-      const updated = result.post || { ...post, votos: result.votos, voto_usuario: result.voto };
-      updatePost(updated);
-      setUserVotes(cur => ({ ...cur, [postId]: result.voto }));
-    } catch {
-      updatePost(post);
-      setUserVotes(cur => ({ ...cur, [postId]: post.voto_usuario ?? null }));
+      const result = await request(
+        `/publicaciones/${postId}/votar`,
+        { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) }
+      );
+
+      const serverPost = result.post ?? {
+        ...post,
+        votos: result.votos ?? votes,
+        voto_usuario: result.voto ?? nextVote,
+      };
+      const serverVote = result.voto !== undefined ? result.voto : nextVote;
+
+      updatePost(serverPost);
+      setUserVotes(cur => ({ ...cur, [postId]: serverVote }));
+
+      if (selectedPost?.id === postId) {
+        setSelectedPost(serverPost);
+      }
+    } catch (err) {
+      console.error('handleVote:', err);
+      updatePost(previousPost);
+      setUserVotes(cur => ({ ...cur, [postId]: previousVote }));
     }
   }
 
@@ -106,20 +125,27 @@ export default function UserPage({ user, onUserUpdate }) {
         : await request(`/usuarios/compartidos/${post.id}`, { method: 'POST', body: JSON.stringify({}) });
 
       updatePost(updated);
+
       if (!post.compartido_por_usuario) {
-        setSharedPosts(cur => cur.some(item => item.id === updated.id) ? cur : [updated, ...cur]);
+        setSharedPosts(cur =>
+          cur.some(item => item.id === updated.id) ? cur : [updated, ...cur]
+        );
       } else if (profile?.is_me) {
         setSharedPosts(cur => cur.filter(item => item.id !== post.id));
       }
+      return updated;
     } catch (e) {
       console.error('handleShare:', e);
+      return null;
     }
   }
 
   async function handleFollow() {
     if (!profile) return;
     try {
-      const next = profile.is_following ? await request(`/usuarios/${profile.username}/follow`, { method: 'DELETE' }) : await request(`/usuarios/${profile.username}/follow`, { method: 'POST', body: JSON.stringify({}) });
+      const next = profile.is_following
+        ? await request(`/usuarios/${profile.username}/follow`, { method: 'DELETE' })
+        : await request(`/usuarios/${profile.username}/follow`, { method: 'POST', body: JSON.stringify({}) });
       setProfile(next);
     } catch (e) {
       console.error('handleFollow:', e);
@@ -129,13 +155,11 @@ export default function UserPage({ user, onUserUpdate }) {
   async function handleSaveBio() {
     setSavingBio(true);
     try {
-      const updated = await request('/usuarios/perfil', { 
-        method: 'PATCH', 
-        body: JSON.stringify({ bio: bioDraft }) 
+      const updated = await request('/usuarios/perfil', {
+        method: 'PATCH',
+        body: JSON.stringify({ bio: bioDraft }),
       });
-
       onUserUpdate?.(updated);
-
       setProfile(cur => cur ? { ...cur, bio: updated.bio } : cur);
       setEditingBio(false);
     } catch (e) {
@@ -155,15 +179,30 @@ export default function UserPage({ user, onUserUpdate }) {
   }
 
   if (loading) {
-    return <main className={styles.profilePage}><div className={styles.profileShell}><div className={styles.profilePanel}>Cargando perfil...</div></div></main>;
+    return (
+      <main className={styles.profilePage}>
+        <div className={styles.profileShell}>
+          <div className={styles.profilePanel}>Cargando perfil...</div>
+        </div>
+      </main>
+    );
   }
 
   if (!profile) {
-    return <main className={styles.profilePage}><div className={styles.profileShell}><div className={styles.profilePanel}>Perfil no encontrado.</div></div></main>;
+    return (
+      <main className={styles.profilePage}>
+        <div className={styles.profileShell}>
+          <div className={styles.profilePanel}>Perfil no encontrado.</div>
+        </div>
+      </main>
+    );
   }
 
   const joinedDate = profile.fecha_creacion
-    ? new Date(profile.fecha_creacion).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+    ? new Date(profile.fecha_creacion).toLocaleDateString('es-ES', {
+        month: 'long',
+        year: 'numeric',
+      })
     : 'Sin fecha';
 
   return (
@@ -173,7 +212,9 @@ export default function UserPage({ user, onUserUpdate }) {
           <div className={styles.profileCover} />
           <div className={styles.profileHeaderBody}>
             <div className={styles.profileAvatarLarge}>
-              {profile.avatar_url ? <img src={addCacheBust(profile.avatar_url)} alt={profile.username} /> : <span>{profile.username.slice(0, 2).toUpperCase()}</span>}
+              {profile.avatar_url
+                ? <img src={addCacheBust(profile.avatar_url)} alt={profile.username} />
+                : <span>{profile.username.slice(0, 2).toUpperCase()}</span>}
             </div>
 
             <div className={styles.profileTitleBlock}>
@@ -183,8 +224,14 @@ export default function UserPage({ user, onUserUpdate }) {
                   <span>{profile.email}</span>
                 </div>
                 {!profile.is_me && (
-                  <button type="button" className={styles.profileFollowBtn} onClick={handleFollow}>
-                    {profile.is_following ? <UserRoundCheck size={16} /> : <UserPlus size={16} />}
+                  <button
+                    type="button"
+                    className={styles.profileFollowBtn}
+                    onClick={handleFollow}
+                  >
+                    {profile.is_following
+                      ? <UserRoundCheck size={16} />
+                      : <UserPlus size={16} />}
                     <span>{profile.is_following ? 'Siguiendo' : 'Seguir'}</span>
                   </button>
                 )}
@@ -202,7 +249,12 @@ export default function UserPage({ user, onUserUpdate }) {
 
           <div className={styles.profileTabs}>
             {TABS.map(([id, label]) => (
-              <button key={id} type="button" className={activeTab === id ? styles.active : ''} onClick={() => setActiveTab(id)}>
+              <button
+                key={id}
+                type="button"
+                className={activeTab === id ? styles.active : ''}
+                onClick={() => setActiveTab(id)}
+              >
                 {label}
               </button>
             ))}
@@ -213,51 +265,67 @@ export default function UserPage({ user, onUserUpdate }) {
           <div className={styles.profilePanel}>
             {activeTab === 'posts' && (
               <div className={styles.profilePostList}>
-                {posts.length > 0 ? posts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    userVote={userVotes[post.id]}
-                    onVote={handleVote}
-                    onShare={handleShare}
-                    onAuthorClick={handleUsernameClick}
-                    onClick={() => setSelectedPost(post)}
-                  />
-                )) : <EmptyState text="Este usuario no ha publicado nada todavía." />}
+                {posts.length > 0
+                  ? posts.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      userVote={userVotes[post.id]}
+                      onVote={handleVote}
+                      onShare={handleShare}
+                      onAuthorClick={handleUsernameClick}
+                      onClick={() => setSelectedPost(post)}
+                    />
+                  ))
+                  : <EmptyState text="Este usuario no ha publicado nada todavía." />}
               </div>
             )}
 
             {activeTab === 'comments' && (
               <div className={styles.profileCommentList}>
-                {comments.length > 0 ? comments.map(comment => (
-                  <article key={comment.id} className={styles.profileCommentCard}>
-                    <div className={styles.profileCommentMeta}>
-                      <button type="button" className={styles.inlineUserLink} onClick={() => navigate(`/u/${profile.username}`)}>{profile.username}</button>
-                      <span>en {comment.publicacion_titulo || 'Publicación'}</span>
-                    </div>
-                    <p>{comment.contenido}</p>
-                    <button type="button" className={styles.profileLinkBtn} onClick={() => openPost(comment.publicacion_ref_id)}>
-                      <MessageSquare size={16} />
-                      <span>Ver post</span>
-                    </button>
-                  </article>
-                )) : <EmptyState text="Este usuario no ha respondido todavía." />}
+                {comments.length > 0
+                  ? comments.map(comment => (
+                    <article key={comment.id} className={styles.profileCommentCard}>
+                      <div className={styles.profileCommentMeta}>
+                        <button
+                          type="button"
+                          className={styles.inlineUserLink}
+                          onClick={() => navigate(`/u/${profile.username}`)}
+                        >
+                          {profile.username}
+                        </button>
+                        <span>en {comment.publicacion_titulo || 'Publicación'}</span>
+                      </div>
+                      <p>{comment.contenido}</p>
+                      <button
+                        type="button"
+                        className={styles.profileLinkBtn}
+                        onClick={() => openPost(comment.publicacion_ref_id)}
+                      >
+                        <MessageSquare size={16} />
+                        <span>Ver post</span>
+                      </button>
+                    </article>
+                  ))
+                  : <EmptyState text="Este usuario no ha respondido todavía." />}
               </div>
             )}
 
             {activeTab === 'shared' && (
               <div className={styles.profilePostList}>
-                {sharedPosts.length > 0 ? sharedPosts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    userVote={userVotes[post.id]}
-                    onVote={handleVote}
-                    onShare={handleShare}
-                    onAuthorClick={handleUsernameClick}
-                    onClick={() => setSelectedPost(post)}
-                  />
-                )) : <EmptyState text="No hay publicaciones compartidas." />}
+                {sharedPosts.length > 0
+                  ? sharedPosts.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      userVote={userVotes[post.id]}
+                      onVote={handleVote}
+                      onShare={handleShare}
+                      onAuthorClick={handleUsernameClick}
+                      onClick={() => setSelectedPost(post)}
+                    />
+                  ))
+                  : <EmptyState text="No hay publicaciones compartidas." />}
               </div>
             )}
           </div>
@@ -295,13 +363,23 @@ export default function UserPage({ user, onUserUpdate }) {
                 </div>
               )}
             </section>
+
             <section className={styles.profilePanel}>
               <h3>Seguidores</h3>
-              <UserList users={profile.followers} navigate={navigate} emptyText="Sin seguidores aún." />
+              <UserList
+                users={profile.followers}
+                navigate={navigate}
+                emptyText="Sin seguidores aún."
+              />
             </section>
+
             <section className={styles.profilePanel}>
               <h3>Seguidos</h3>
-              <UserList users={profile.following} navigate={navigate} emptyText="No sigue a nadie todavía." />
+              <UserList
+                users={profile.following}
+                navigate={navigate}
+                emptyText="No sigue a nadie todavía."
+              />
             </section>
           </aside>
         </section>
@@ -312,7 +390,10 @@ export default function UserPage({ user, onUserUpdate }) {
           post={selectedPost}
           user={user}
           onClose={() => setSelectedPost(null)}
-          onPostUpdated={updatePost}
+          onPostUpdated={post => {
+            updatePost(post);
+            setSelectedPost(post);
+          }}
           onPostDeleted={handlePostDeleted}
           onAuthorClick={handleUsernameClick}
           onShare={handleShare}
@@ -341,8 +422,15 @@ function UserList({ users = [], navigate, emptyText }) {
   return (
     <div className={styles.profileUserList}>
       {users.map(item => (
-        <button key={item.id} type="button" className={styles.profileUserChip} onClick={() => navigate(`/u/${item.username}`)}>
-          {item.avatar_url ? <img src={addCacheBust(item.avatar_url)} alt={item.username} /> : <span>{item.username.slice(0, 2).toUpperCase()}</span>}
+        <button
+          key={item.id}
+          type="button"
+          className={styles.profileUserChip}
+          onClick={() => navigate(`/u/${item.username}`)}
+        >
+          {item.avatar_url
+            ? <img src={addCacheBust(item.avatar_url)} alt={item.username} />
+            : <span>{item.username.slice(0, 2).toUpperCase()}</span>}
           <small>{item.username}</small>
         </button>
       ))}
@@ -357,9 +445,7 @@ function EmptyState({ text }) {
 const idType = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 
 UserPage.propTypes = {
-  user: PropTypes.shape({
-    id: idType.isRequired,
-  }).isRequired,
+  user: PropTypes.shape({ id: idType.isRequired }).isRequired,
   onUserUpdate: PropTypes.func,
 };
 
@@ -381,4 +467,3 @@ UserList.propTypes = {
 EmptyState.propTypes = {
   text: PropTypes.string.isRequired,
 };
-

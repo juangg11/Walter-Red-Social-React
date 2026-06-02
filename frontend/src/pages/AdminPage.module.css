@@ -546,9 +546,6 @@
   font-size: 16px;
 }
 
-/* ─────────────────────────────────────────────
-   CONFIRM MODAL
-   ───────────────────────────────────────────── */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -599,9 +596,6 @@
   justify-content: center;
 }
 
-/* ─────────────────────────────────────────────
-   STAT CARD
-   ───────────────────────────────────────────── */
 .statCard {
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -638,9 +632,6 @@
   line-height: 1.2;
 }
 
-/* ─────────────────────────────────────────────
-   DRAWER
-   ───────────────────────────────────────────── */
 .drawerOverlay {
   position: fixed;
   inset: 0;
@@ -772,9 +763,6 @@
   display: inline-block;
 }
 
-/* ─────────────────────────────────────────────
-   BULK ACTIONS BAR
-   ───────────────────────────────────────────── */
 .bulkBar {
   flex-shrink: 0;
   background-color: var(--bg-tertiary);

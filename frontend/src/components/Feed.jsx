@@ -47,7 +47,9 @@ export function PostCard({ post, userVote, onVote, onClick, onShare, onAuthorCli
         >
           <ArrowBigUp size={20} />
         </button>
-        <span className={styles.voteCount}>{post.votos ?? 0}</span>
+        <span className={styles.voteCount}>
+          {post.votos !== 0 ? post.votos ?? 0 : 0}
+        </span>
         <button
           type="button"
           className={styles.voteBtn}
@@ -61,7 +63,14 @@ export function PostCard({ post, userVote, onVote, onClick, onShare, onAuthorCli
 
       <div className={styles.postContent}>
         <p className={styles.postMeta}>
-          Publicado por <button type="button" className={styles.inlineUserLink} onClick={e => { e.stopPropagation(); onAuthorClick?.(post.username); }}>{post.username ?? 'anon'}</button>
+          Publicado por{' '}
+          <button
+            type="button"
+            className={styles.inlineUserLink}
+            onClick={e => { e.stopPropagation(); onAuthorClick?.(post.username); }}
+          >
+            {post.username ?? 'anon'}
+          </button>
           {communityName ? ` en w/${communityName}` : ''}
         </p>
         <h3>{post.titulo ?? 'Sin título'}</h3>
@@ -105,7 +114,10 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
       const data = await request(`/publicaciones?userId=${userId}`);
       setPosts(data);
       const votesMap = {};
-      data.forEach(p => { if (p.voto_usuario) votesMap[p.id] = p.voto_usuario; });
+      data.forEach(p => {
+        // Solo guardar si hay voto real (no null/undefined)
+        if (p.voto_usuario) votesMap[p.id] = p.voto_usuario;
+      });
       setUserVotes(votesMap);
     } catch (e) {
       console.error('fetchPosts:', e);
@@ -121,7 +133,9 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
         if (ignore) return;
         setPosts(data);
         const votesMap = {};
-        data.forEach(p => { if (p.voto_usuario) votesMap[p.id] = p.voto_usuario; });
+        data.forEach(p => {
+          if (p.voto_usuario) votesMap[p.id] = p.voto_usuario;
+        });
         setUserVotes(votesMap);
       })
       .catch(e => console.error('fetchPosts:', e))
@@ -129,15 +143,14 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
         if (!ignore) setLoading(false);
       });
 
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [userId]);
 
   async function handleVote(postId, voteType) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
-    const previousVotes = post.votos;
+
+    const previousPost = { ...post };
     const previousVote = userVotes[postId] ?? null;
 
     const { nextVote, votes } = computeVote({
@@ -146,23 +159,39 @@ export default function Feed({ user, searchQuery, selectedCommunities, communiti
       votes: post.votos,
     });
 
-    setPosts(cur => cur.map(p => p.id === postId ? { ...p, votos: votes } : p));
+    setPosts(cur => cur.map(p => p.id === postId
+      ? { ...p, votos: votes, voto_usuario: nextVote }
+      : p
+    ));
     setUserVotes(cur => ({ ...cur, [postId]: nextVote }));
 
     try {
-      const result = await request(`/publicaciones/${postId}/votar`, { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) });
-      const serverPost = result.post || { ...post, votos: result.votos, voto_usuario: result.voto };
-      setPosts(cur => cur.map(p => p.id === postId ? serverPost : p));
-      setUserVotes(cur => ({ ...cur, [postId]: result.voto }));
-    } catch {
-      setPosts(cur => cur.map(p => p.id === postId ? { ...p, votos: previousVotes } : p));
+      const result = await request(
+        `/publicaciones/${postId}/votar`,
+        { method: 'POST', body: JSON.stringify({ tipo_voto: voteType }) }
+      );
+
+      const serverPost = result.post ?? { ...post, votos: result.votos ?? votes, voto_usuario: result.voto ?? nextVote };
+      const serverVote = result.voto !== undefined ? result.voto : nextVote;
+
+      setPosts(cur => cur.map(p => p.id === postId ? { ...serverPost, id: postId } : p));
+      setUserVotes(cur => ({ ...cur, [postId]: serverVote }));
+
+      if (selectedPost?.id === postId) {
+        setSelectedPost({ ...serverPost, id: postId });
+      }
+    } catch (err) {
+      console.error('handleVote:', err);
+      setPosts(cur => cur.map(p => p.id === postId ? previousPost : p));
       setUserVotes(cur => ({ ...cur, [postId]: previousVote }));
     }
   }
 
   function syncPost(updatedPost) {
     setPosts(cur => cur.map(p => p.id === updatedPost.id ? updatedPost : p));
-    setUserVotes(cur => ({ ...cur, [updatedPost.id]: updatedPost.voto_usuario ?? cur[updatedPost.id] ?? null }));
+    if (updatedPost.voto_usuario !== undefined) {
+      setUserVotes(cur => ({ ...cur, [updatedPost.id]: updatedPost.voto_usuario ?? null }));
+    }
     setSelectedPost(prev => prev?.id === updatedPost.id ? updatedPost : prev);
   }
 
