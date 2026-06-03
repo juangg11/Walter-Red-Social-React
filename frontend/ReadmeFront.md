@@ -1,10 +1,10 @@
-# 📱 Frontend - Walter Red Social
+# Frontend - Walter Red Social
 
 Documentación técnica completa de los componentes principales del frontend.
 
 ---
 
-## 📑 Tabla de Contenidos
+## Tabla de Contenidos
 
 1. [App.jsx](#appjsx) - Orquestador central
 2. [HomePage](#homepage) - Página principal
@@ -23,7 +23,7 @@ Documentación técnica completa de los componentes principales del frontend.
 
 ## App.jsx
 
-### 🎯 Propósito General
+### Propósito General
 
 **Componente raíz** de la aplicación que actúa como orquestador central:
 
@@ -33,7 +33,7 @@ Documentación técnica completa de los componentes principales del frontend.
 - Implementa seguridad contra inyecciones (XSS)
 - Mantiene conexión en tiempo real (WebSockets)
 
-### 1️⃣ Funciones Auxiliares
+### Funciones Auxiliares
 
 #### `getInitialUser()` y `getInitialSettings()`
 
@@ -63,7 +63,7 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 - Deduce sección activa (Mensajes, Comunidades, Perfil, etc.)
 - Marca pestaña en navegación
 
-### 2️⃣ Gestión de Estados
+### Gestión de Estados
 
 | Estado | Propósito |
 |--------|-----------|
@@ -74,7 +74,7 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 | `chatToast` | Alertas visuales |
 | `settings` | Preferencias (tema, accesibilidad) |
 
-### 3️⃣ Handlers (Funciones de Control)
+### Handlers (Funciones de Control)
 
 | Función | Descripción |
 |---------|-------------|
@@ -84,33 +84,33 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 | `handleLogout()` | Limpia sesión y localStorage |
 | `handleTabChange(tab)` | Navega a pestaña con `react-router-dom` |
 
-### 4️⃣ Efectos Principales (useEffect)
+### Efectos Principales (useEffect)
 
-#### 🎨 **Sincronización de Tema y Accesibilidad**
+#### **Sincronización de Tema y Accesibilidad**
 - Inyecta atributos `data-*` en `<html>` y `<body>`
 - Cambia estilos con variables CSS
 - Guarda preferencias en `localStorage`
 
-#### 📡 **Carga Inicial de Datos**
+#### **Carga Inicial de Datos**
 - Peticiones paralelas con `Promise.all()`
 - Usa bandera `ignore` para prevenir race conditions
 - Evita fugas de memoria
 
-#### 🔌 **Conexión WebSocket**
+#### **Conexión WebSocket**
 - Abre túnel bidireccional si usuario autenticado
 - Valida URL con Expresión Regular contra inyecciones
 - Eventos `chat:message` incrementan notificaciones
 - Dispara notificaciones nativas del navegador
 
-#### ⏱️ **Limpieza de Alertas**
+#### **Limpieza de Alertas**
 - Toast desaparece tras 4.5 segundos
 - Limpia timers al cambiar componentes
 
-#### 🔐 **Interceptor Global de Autenticación**
+#### **Interceptor Global de Autenticación**
 - Escucha evento `auth:unauthorized`
 - Desloguea automáticamente si token expira
 
-### 5️⃣ Renderizado
+### Renderizado
 
 **Pantalla de Autenticación**: Si no hay usuario → muestra `<Auth />`
 
@@ -128,7 +128,7 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 
 ## HomePage
 
-### 📐 Layout de Tres Columnas
+### Layout de Tres Columnas
 
 ```
 ┌─────────────────┬──────────────┬─────────────────┐
@@ -146,7 +146,7 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 | Centro | `<Feed />` | Publicaciones según filtros |
 | Derecha | `<TrendingSidebar />` | Posts populares |
 
-### 📦 Props Principales
+### Props Principales
 
 | Prop | Tipo | Destinatario | Uso |
 |------|------|--------------|-----|
@@ -157,7 +157,7 @@ Filtros de seguridad contra **XSS (Cross-Site Scripting)**:
 | `communities` | Array | Ambos sidebars | Listar comunidades |
 | `onPostClick` | Function | `<TrendingSidebar />` | Abrir modal de post |
 
-### ✅ Validación con PropTypes
+### Validación con PropTypes
 
 Robustez en JavaScript: Define IDs como `PropTypes.oneOf([PropTypes.string, PropTypes.number])`
 
@@ -167,7 +167,7 @@ Robustez en JavaScript: Define IDs como `PropTypes.oneOf([PropTypes.string, Prop
 
 ## SettingsPage
 
-### 📋 Lógica de Formateo
+### Lógica de Formateo
 
 #### `memberSince`
 
@@ -184,7 +184,7 @@ Helper que aplica cambios a configuración:
 - Aplica cambios estructurales
 - Propaga hacia arriba con `onSettingsChange`
 
-### 🔧 Funciones Asíncronas
+### Funciones Asíncronas
 
 #### `handleSaveUsername()`
 
@@ -220,7 +220,7 @@ Helper que aplica cambios a configuración:
 ¿Permiso granted? → actualizar config
 ```
 
-### 🎛️ Subcomponente: `ToggleRow`
+### Subcomponente: `ToggleRow`
 
 Componente reutilizable de switch iOS/Android:
 - Atributo `aria-pressed={checked}` para lectores de pantalla
@@ -230,7 +230,7 @@ Componente reutilizable de switch iOS/Android:
 
 ## UserPage
 
-### 📊 Carga Concurrente de Datos
+### Carga Concurrente de Datos
 
 ```javascript
 Promise.all([
@@ -243,7 +243,7 @@ Promise.all([
 
 **Ventaja**: Reduce tiempo de carga percibido vs. peticiones secuenciales.
 
-### 🔄 Control de Race Conditions
+### Control de Race Conditions
 
 ```javascript
 let ignore = false;
@@ -256,11 +256,11 @@ if (!ignore) setState(data);
 ```
 
 Previene:
-- ✅ Actualizar estado en componentes no montados
-- ✅ Datos desincronizados
-- ✅ Fugas de memoria
+- Actualizar estado en componentes no montados
+- Datos desincronizados
+- Fugas de memoria
 
-### 🗳️ Mapeo de Votos Inicial
+### Mapeo de Votos Inicial
 
 Construye diccionario en memoria:
 ```javascript
@@ -269,7 +269,7 @@ Construye diccionario en memoria:
 
 **Beneficio**: Renderizado instantáneo sin queries adicionales.
 
-### 🔨 Funciones de Actualización
+### Funciones de Actualización
 
 #### `updatePost(updatedPost)`
 
@@ -284,7 +284,7 @@ Busca post en arrays locales y actualiza ambos:
 - Filtra post de arrays locales
 - Cierra modal asignando `setSelectedPost(null)`
 
-### 🎯 Actualización Optimista (Optimistic Update)
+### Actualización Optimista (Optimistic Update)
 
 **Patrón antilatencia**:
 
@@ -310,7 +310,7 @@ try {
 
 ## ChatPage
 
-### 🔌 Arquitectura WebSocket
+### Arquitectura WebSocket
 
 A diferencia de HTTP, mantiene conexión persistente:
 
@@ -325,7 +325,7 @@ socket.on('chat:message', (msg) => {
 });
 ```
 
-### ⚡ Optimizaciones de Rendimiento
+### Optimizaciones de Rendimiento
 
 #### Búsqueda con Debounce (Antirrebote)
 
@@ -381,7 +381,7 @@ if (media_resource_type === 'video') {
 - Envuelto en animaciones `framer-motion`
 - Aparición/desaparición limpia
 
-### 🎬 Animaciones Avanzadas (Framer Motion)
+### Animaciones Avanzadas (Framer Motion)
 
 #### Efecto Cascada (Staggered)
 
@@ -400,7 +400,7 @@ Anima elementos al salir del DOM:
 
 ## Auth
 
-### 🔒 Seguridad Proactiva
+### Seguridad Proactiva
 
 #### Saneamiento contra XSS (sanitizeUserForStorage)
 
@@ -424,7 +424,7 @@ const jwtPattern = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 Si falla → lanza error inmediatamente.
 
-### 📍 Persistencia Segura
+### Persistencia Segura
 
 ```javascript
 function persistAuthData(data) {
@@ -440,7 +440,7 @@ function persistAuthData(data) {
 
 **Atomicidad**: O todo se guarda seguro, o nada.
 
-### 🎨 UX de Alto Nivel
+### UX de Alto Nivel
 
 #### Modo Invitado
 
@@ -471,7 +471,7 @@ useEffect(() => {
 }, [isOpen]);
 ```
 
-### 🌌 Animaciones Inmersivas
+### Animaciones Inmersivas
 
 #### Efecto Aurora
 
@@ -490,7 +490,7 @@ Username y secciones del modal:
 
 ## Comunidades
 
-### 🔀 Patrón State Invalidation
+### Patrón State Invalidation
 
 ```javascript
 onCommunityCreated?.() // Invalida caché de componentes adyacentes
@@ -498,7 +498,7 @@ onCommunityCreated?.() // Invalida caché de componentes adyacentes
 
 Asegura sincronización global sin recargar página.
 
-### 🔍 Filtrado Client-Side
+### Filtrado Client-Side
 
 ```javascript
 const filtered = communities
@@ -511,7 +511,7 @@ const filtered = communities
 
 **Ventaja**: Evita múltiples peticiones HTTP al escribir.
 
-### 🎨 Arquitectura Temática (CAT_COLORS)
+### Arquitectura Temática (CAT_COLORS)
 
 ```javascript
 CAT_COLORS = {
@@ -525,7 +525,7 @@ Inyecta dinámicamente en `style` de elementos.
 
 **WCAG Compliance**: Contraste de color accesible.
 
-### 📊 Utilidades de UI
+### Utilidades de UI
 
 #### Formateador de Métricas (fmtCount)
 
@@ -558,7 +558,7 @@ Usuarios con lectores de pantalla pueden cerrar.
 
 ## Feed
 
-### 🗳️ Actualización Optimista
+### Actualización Optimista
 
 **Patrón antilatencia principal**:
 
@@ -583,7 +583,7 @@ try {
 }
 ```
 
-### 📐 Abstracción de Lógica (Principio Single Responsibility)
+### Abstracción de Lógica (Principio Single Responsibility)
 
 ```javascript
 import { computeVote } from '../utils/computeVote';
@@ -593,7 +593,7 @@ Reglas de negocio de votación **independientes de React**:
 - Testeables con Unit Tests
 - Reutilizables en otros contextos
 
-### 📺 Renderizado Polimórfico
+### Renderizado Polimórfico
 
 #### Inyección Condicional de Medios
 
@@ -615,7 +615,7 @@ onClick={(e) => {
 
 Votar no abre el post completo.
 
-### 🌐 Portales y Accesibilidad
+### Portales y Accesibilidad
 
 #### createPortal (Botón Flotante)
 
@@ -640,7 +640,7 @@ onKeyDown={(e) => {
 
 ## Navbar
 
-### 🔐 Doble Verificación de Permisos
+### Doble Verificación de Permisos
 
 ```javascript
 useEffect(() => {
@@ -661,7 +661,7 @@ useEffect(() => {
 
 **Defensa**: Si usuario manipula localStorage para simular admin, servidor lo revierte inmediatamente.
 
-### 📸 Cache-Busting de Imágenes
+### Cache-Busting de Imágenes
 
 ```javascript
 addCacheBust(user.avatar_url)
@@ -670,7 +670,7 @@ addCacheBust(user.avatar_url)
 
 Usuario actualiza foto pero navegador mostraba versión antigua.
 
-### ✨ Microinteracciones (Framer Motion)
+### Microinteracciones (Framer Motion)
 
 #### Hover Effects
 
@@ -689,7 +689,7 @@ type: "spring" // Física de resorte
 
 Expande/contrae orgánicamente. Reemplaza doble dígito por "9+".
 
-### 📤 Flujo Unidireccional de Datos
+### Flujo Unidireccional de Datos
 
 ```javascript
 // Navbar NO muta directamente
@@ -708,7 +708,7 @@ Centraliza lógica en componente padre.
 
 ## PostCreate
 
-### 🌥️ Orquestación Asíncrona Multi-Etapa
+### Orquestación Asíncrona Multi-Etapa
 
 #### Desacoplamiento de Almacenamiento
 
@@ -726,7 +726,7 @@ await request('POST', '/publicaciones', {
 
 No satura servidor con archivos binarios.
 
-### 🔒 Aislamiento de Scroll
+### Aislamiento de Scroll
 
 ```javascript
 useEffect(() => {
@@ -743,7 +743,7 @@ useEffect(() => {
 
 Evita scroll parasitario en feed de fondo.
 
-### ✅ Validaciones Preventivas
+### Validaciones Preventivas
 
 #### Filtrado de Comunidades
 
@@ -777,7 +777,7 @@ function reset() {
 
 Previene datos residuales.
 
-### ♿ UI/UX Accesible
+### UI/UX Accesible
 
 #### Input de Archivo Oculto
 
@@ -802,7 +802,7 @@ onClick={() => handleClose()}
 
 ## PostModal
 
-### 🌳 Algoritmia de Árboles (Comment Threads)
+### Algoritmia de Árboles (Comment Threads)
 
 #### Complejidad O(N)
 
@@ -837,7 +837,7 @@ function CommentItem({ comment, replies }) {
 
 Anidación infinita organizada.
 
-### 🗑️ Borrado en Cascada
+### Borrado en Cascada
 
 ```javascript
 const removeIds = new Set([String(commentId)]);
@@ -857,7 +857,7 @@ setComments(current => current.filter(c => !removeIds.has(String(c.id))));
 
 Si borra comentario padre → elimina toda rama.
 
-### 🔄 Sincronización Bidireccional
+### Sincronización Bidireccional
 
 #### Estado Espejo Local
 
@@ -880,7 +880,7 @@ Feed ve cambios al cerrar modal sin recargar.
 
 ## Sidebar
 
-### 🏗️ Multi-Exportación Coherente
+### Multi-Exportación Coherente
 
 ```javascript
 export const CommunitiesSidebar = ({ ... });
@@ -892,7 +892,7 @@ Import selectivo:
 import { CommunitiesSidebar, TrendingSidebar } from './Sidebar';
 ```
 
-### 🔢 Defensa de Tipos (Type Hardening)
+### Defensa de Tipos (Type Hardening)
 
 ```javascript
 const selectedIds = selectedCommunities.map(String);
@@ -905,7 +905,7 @@ if (selectedIds.includes(id)) {
 
 Convierte todo a strings previo a comparar.
 
-### 📋 Selección Global Idempotente
+### Selección Global Idempotente
 
 ```javascript
 const allSelected = joinedCommunities.every(c =>
@@ -921,7 +921,7 @@ if (allSelected) {
 
 Toggle limpio: Todo o nada.
 
-### 👁️ Virtualización de Listas
+### Virtualización de Listas
 
 ```javascript
 joinedCommunities.slice(0, 6) // Muestra 6 por defecto
@@ -931,7 +931,7 @@ joinedCommunities.slice(0, 6) // Muestra 6 por defecto
 
 Reduce nodos DOM activos.
 
-### 🔊 Aislamiento de Eventos
+### Aislamiento de Eventos
 
 ```javascript
 <input type="checkbox" onClick={(e) => e.stopPropagation()} />
@@ -939,7 +939,7 @@ Reduce nodos DOM activos.
 
 Checkbox no dispara evento del botón padre.
 
-### 📈 Algoritmo de Ranking
+### Algoritmo de Ranking
 
 ```javascript
 const sorted = [...data]
@@ -953,7 +953,7 @@ const sorted = [...data]
 
 ---
 
-## 🚀 Mejores Prácticas Aplicadas
+## Mejores Prácticas Aplicadas
 
 | Patrón | Beneficio |
 |--------|-----------|
@@ -969,18 +969,3 @@ const sorted = [...data]
 | **Framer Motion** | UX inmersiva y pulida |
 
 ---
-
-## 📚 Stack Tecnológico
-
-- **React 18+** - UI Framework
-- **Framer Motion** - Animaciones avanzadas
-- **React Router DOM** - Ruteo
-- **Cloudinary** - Almacenamiento multimedia
-- **WebSockets** - Tiempo real
-- **localStorage** - Persistencia cliente
-- **Prop-Types** - Validación de tipos
-- **CSS Modules** - Estilos encapsulados
-
----
-
-**Última actualización**: Junio 3, 2026
