@@ -24,7 +24,7 @@ export const authService = {
       throw new AppError(409, 'Email o username ya en uso');
     }
 
-    const id           = uuidv4();
+    const id = uuidv4();
     const passwordHash = await bcrypt.hash(password, 12);
 
     await UserModel.create({ id, email, username, passwordHash });
