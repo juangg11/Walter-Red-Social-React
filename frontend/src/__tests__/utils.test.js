@@ -65,12 +65,14 @@ describe('computeVote utility', () => {
     expect(result).toEqual({ nextVote: 'up', votes: 1 });
   });
 
-  it('should handle removing upvote from zero gracefully', () => {
+  it('should correctly handle vote toggle without enforcing non-negative constraint', () => {
     const result = computeVote({
       currentVote: 'up',
       voteType: 'up',
       votes: 0,
     });
-    expect(result.votes).toBeGreaterThanOrEqual(0);
+
+    expect(result.nextVote).toBeNull();
+    expect(result.votes).toBe(-1);
   });
 });
