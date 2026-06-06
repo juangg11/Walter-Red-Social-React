@@ -85,13 +85,31 @@ function getActiveTab(pathname) {
   return 'feed';
 }
 
+function getChatNotificationStorageKey(userId) {
+  return `walter-chat-notifications:${userId}`;
+}
+
+function readChatNotificationCount(userId) {
+  if (!userId) return 0;
+  const stored = Number(globalThis.localStorage?.getItem(getChatNotificationStorageKey(userId)));
+  return Number.isFinite(stored) && stored > 0 ? stored : 0;
+}
+
+function writeChatNotificationCount(userId, count) {
+  if (!userId) return;
+  const key = getChatNotificationStorageKey(userId);
+  const safeCount = Math.max(0, Number(count) || 0);
+  if (safeCount === 0) globalThis.localStorage?.removeItem(key);
+  else globalThis.localStorage?.setItem(key, String(safeCount));
+}
+
 function App() {
   const [user, setUser] = useState(getInitialUser);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [communities, setCommunities] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [chatNotificationCount, setChatNotificationCount] = useState(0);
+  const [chatNotificationCount, setChatNotificationCount] = useState(() => readChatNotificationCount(getInitialUser()?.id));
   const [selectedPost, setSelectedPost] = useState(null);
   const [settings, setSettings] = useState(getInitialSettings);
   const location = useLocation();
@@ -119,6 +137,14 @@ function App() {
     document.documentElement.dataset.motion = settings.reduceMotion ? 'reduced' : 'normal';
     globalThis.localStorage.setItem('walter-settings', JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    setChatNotificationCount(readChatNotificationCount(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    writeChatNotificationCount(userId, chatNotificationCount);
+  }, [userId, chatNotificationCount]);
 
   useEffect(() => {
     if (!userId) return undefined;
@@ -206,6 +232,7 @@ function App() {
   }
 
   function handleLogout() {
+    writeChatNotificationCount(userId, 0);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
