@@ -102,6 +102,7 @@ export default function ChatPage({ user }) {
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [messagesStatus, setMessagesStatus] = useState('idle');
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [text, setText] = useState('');
@@ -118,6 +119,17 @@ export default function ChatPage({ user }) {
     setActiveChat(prev => prev || data[0] || null);
   }
 
+  function selectChat(chat) {
+    if (Number(activeChat?.id) === Number(chat?.id)) return;
+    setActiveChat(chat);
+    setMessages([]);
+    setMessagesStatus(chat?.id ? 'loading' : 'idle');
+    setReplyTo(null);
+    setImageData('');
+    setImageFile(null);
+    setShowEmojis(false);
+  }
+
   useEffect(() => {
     let ignore = false;
     request('/chat')
@@ -132,13 +144,22 @@ export default function ChatPage({ user }) {
   useEffect(() => {
     if (!activeChat?.id) return undefined;
     let ignore = false;
+    const chatId = activeChat.id;
+    setMessages([]);
+    setMessagesStatus('loading');
 
-    request(`/chat/${activeChat.id}/mensajes`)
+    request(`/chat/${chatId}/mensajes`)
       .then(data => {
-        if (!ignore) setMessages(data);
+        if (!ignore && Number(activeChat?.id) === Number(chatId)) {
+          setMessages(data);
+          setMessagesStatus('ready');
+        }
       })
       .catch(() => {
-        if (!ignore) setMessages([]);
+        if (!ignore && Number(activeChat?.id) === Number(chatId)) {
+          setMessages([]);
+          setMessagesStatus('error');
+        }
       });
 
     return () => { ignore = true; };
@@ -158,6 +179,7 @@ export default function ChatPage({ user }) {
 
       if (Number(activeChat?.id) !== Number(message.chat_id)) return;
       setMessages(buildMessagesUpdater(message));
+      setMessagesStatus('ready');
     };
 
     ws.onerror = () => {};
@@ -186,7 +208,7 @@ export default function ChatPage({ user }) {
     const chat = await request('/chat', { method: 'POST', body: JSON.stringify({ userId }) });
     const updated = await request('/chat');
     setChats(updated);
-    setActiveChat(updated.find(item => Number(item.id) === Number(chat.id)) || chat);
+    selectChat(updated.find(item => Number(item.id) === Number(chat.id)) || chat);
     setQuery('');
     setUsers([]);
   }
@@ -260,7 +282,7 @@ export default function ChatPage({ user }) {
                     key={chat.id} 
                     variants={itemVariants}
                     className={activeChat?.id === chat.id ? styles.active : ''} 
-                    onClick={() => setActiveChat(chat)}
+                    onClick={() => selectChat(chat)}
                     whileTap={{ scale: 0.98 }}
                   >
                     <ChatAvatar className={styles.avatarSmall} src={chat.other_avatar_url} username={chat.other_username} />
@@ -295,7 +317,16 @@ export default function ChatPage({ user }) {
               </header>
 
               <div className={styles.messagesList}>
-                {messages.map(message => {
+                {messagesStatus === 'loading' && (
+                  <div className={styles.messagesLoading}>Cargando mensajes...</div>
+                )}
+                {messagesStatus === 'error' && (
+                  <div className={styles.messagesLoading}>No se pudieron cargar los mensajes.</div>
+                )}
+                {messagesStatus === 'ready' && messages.length === 0 && (
+                  <div className={styles.messagesLoading}>Todavía no hay mensajes.</div>
+                )}
+                {messagesStatus === 'ready' && messages.map(message => {
                   const mine = message.usuario_id === user.id;
                   return (
                     <motion.div 

@@ -164,6 +164,17 @@
   min-height: 0;
 }
 
+.messagesLoading {
+  flex: 1;
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 .messageRow {
   display: flex;
   justify-content: flex-start;
