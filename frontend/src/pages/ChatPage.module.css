@@ -1,11 +1,11 @@
 .chatPage {
   width: 100%;
-  max-width: 1180px;
+  max-width: none;
   height: calc(100vh - 88px);
   margin: 0 auto;
   padding: var(--spacing-lg);
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
   gap: var(--spacing-lg);
   box-sizing: border-box;
 }
@@ -174,7 +174,7 @@
 }
 
 .messageBubble {
-  max-width: min(75%, 34rem);
+  max-width: min(78%, 48rem);
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--border-radius-md);

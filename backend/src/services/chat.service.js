@@ -1,4 +1,5 @@
 import { ChatModel } from '../models/chat.model.js';
+import { UserModel } from '../models/user.model.js';
 import { AppError } from '../utils/AppError.js';
 import { mediaService } from './media.service.js';
 
