@@ -106,6 +106,7 @@
 }
 
 .navIconItem {
+  position: relative;
   cursor: pointer;
   color: inherit;
   border-bottom: 2px solid transparent;
@@ -250,14 +251,29 @@
 }
 
 .notificationItem {
+  width: 100%;
   padding: 0.75rem;
   border-bottom: 1px solid var(--border-light);
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .notificationItem:hover {
   background-color: var(--bg-secondary);
+}
+
+.notificationItemUnread {
+  background: color-mix(in srgb, var(--primary-hover) 10%, var(--bg-primary));
+  border-left: 3px solid var(--primary-hover);
+}
+
+.notificationItemRead {
+  opacity: 0.68;
 }
 
 .notificationTitle {

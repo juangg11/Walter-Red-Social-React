@@ -1,5 +1,6 @@
 import { CommunityModel } from '../models/community.model.js';
 import { CommentModel } from '../models/comment.model.js';
+import { NotificationModel } from '../models/notification.model.js';
 import { PostModel } from '../models/post.model.js';
 import { UserModel } from '../models/user.model.js';
 import { AppError } from '../utils/AppError.js';
@@ -76,7 +77,19 @@ export const usuariosService = {
   async follow(username, viewerId) {
     const user = await this.getByUsername(username);
     if (user.id === viewerId) throw new AppError(400, 'No puedes seguirte a ti mismo');
-    await UserModel.follow(viewerId, user.id);
+    const affectedRows = await UserModel.follow(viewerId, user.id);
+    if (affectedRows > 0) {
+      const follower = await UserModel.findById(viewerId);
+      await NotificationModel.create({
+        usuario_id: user.id,
+        titulo: 'Nuevo seguidor',
+        mensaje: `${follower?.username || 'Un usuario'} empezó a seguirte`,
+        publicacion_id: null,
+        comentario_id: null,
+        tipo: 'seguimiento',
+        actor_usuario_id: viewerId,
+      });
+    }
     return this.getProfile(username, viewerId);
   },
 

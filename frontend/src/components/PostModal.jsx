@@ -38,6 +38,7 @@ export default function PostModal({
   useEffect(() => {
     if (!post?.id) return;
     let ignore = false;
+    setLoading(true);
 
     request(`/comentarios?publicacion_id=${post.id}`)
       .then(data => { if (!ignore) setComments(data); })
@@ -46,6 +47,12 @@ export default function PostModal({
 
     return () => { ignore = true; };
   }, [post?.id]);
+
+  useEffect(() => {
+    if (!post?.highlightedCommentId || loading) return;
+    const target = document.getElementById(`comment-${post.highlightedCommentId}`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [post?.highlightedCommentId, loading, comments.length]);
 
   async function handleDeleteClick() {
     const confirmDelete = globalThis.confirm('¿Seguro que quieres borrar esta publicación?');
@@ -270,6 +277,7 @@ export default function PostModal({
               <CommentTree
                 comments={comments}
                 user={user}
+                highlightedCommentId={post.highlightedCommentId}
                 onReply={addComment}
                 onDelete={handleCommentDeleted}
               />
@@ -281,7 +289,7 @@ export default function PostModal({
   );
 }
 
-function CommentTree({ comments, user, onReply, onDelete }) {
+function CommentTree({ comments, user, highlightedCommentId, onReply, onDelete }) {
   const roots = comments.filter(c => !c.comentario_padre_id);
   const repliesByParent = comments.reduce((acc, comment) => {
     if (comment.comentario_padre_id) {
@@ -297,13 +305,14 @@ function CommentTree({ comments, user, onReply, onDelete }) {
       comment={comment}
       repliesByParent={repliesByParent}
       user={user}
+      highlightedCommentId={highlightedCommentId}
       onReply={onReply}
       onDelete={onDelete}
     />
   ));
 }
 
-function CommentItem({ comment, repliesByParent, user, onReply, onDelete }) {
+function CommentItem({ comment, repliesByParent, user, highlightedCommentId, onReply, onDelete }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const replies = repliesByParent[String(comment.id)] || [];
@@ -317,7 +326,10 @@ function CommentItem({ comment, repliesByParent, user, onReply, onDelete }) {
   }
 
   return (
-    <div className={styles.commentItem}>
+    <div
+      id={`comment-${comment.id}`}
+      className={`${styles.commentItem} ${String(comment.id) === String(highlightedCommentId ?? '') ? styles.commentItemHighlighted : ''}`}
+    >
       <div className={styles.commentMeta}>w/{comment.username}</div>
       <p className={styles.commentText}>{comment.contenido}</p>
       <div className={styles.commentActions}>
@@ -350,6 +362,7 @@ function CommentItem({ comment, repliesByParent, user, onReply, onDelete }) {
               comment={reply}
               repliesByParent={repliesByParent}
               user={user}
+              highlightedCommentId={highlightedCommentId}
               onReply={onReply}
               onDelete={onDelete}
             />
@@ -376,6 +389,7 @@ PostModal.propTypes = {
     voto_usuario: PropTypes.string,
     compartido_por_usuario: PropTypes.bool,
     numero_comentarios: PropTypes.number,
+    highlightedCommentId: idType,
   }).isRequired,
   user: PropTypes.shape({ id: idType }),
   onClose: PropTypes.func,
@@ -389,6 +403,7 @@ PostModal.propTypes = {
 CommentTree.propTypes = {
   comments: PropTypes.arrayOf(PropTypes.object).isRequired,
   user: PropTypes.shape({ id: idType }),
+  highlightedCommentId: idType,
   onReply: PropTypes.func,
   onDelete: PropTypes.func,
 };
@@ -403,6 +418,7 @@ CommentItem.propTypes = {
   }).isRequired,
   repliesByParent: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
   user: PropTypes.shape({ id: idType }),
+  highlightedCommentId: idType,
   onReply: PropTypes.func,
   onDelete: PropTypes.func,
 };

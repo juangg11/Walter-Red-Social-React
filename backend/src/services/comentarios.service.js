@@ -29,6 +29,8 @@ export const comentariosService = {
         mensaje: `${username} comentó en tu publicación`,
         publicacion_id,
         comentario_id: commentId,
+        tipo: 'comentario',
+        actor_usuario_id: userId,
       });
     }
 

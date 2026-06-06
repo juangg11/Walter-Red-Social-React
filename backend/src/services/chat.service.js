@@ -1,6 +1,4 @@
 import { ChatModel } from '../models/chat.model.js';
-import { NotificationModel } from '../models/notification.model.js';
-import { UserModel } from '../models/user.model.js';
 import { AppError } from '../utils/AppError.js';
 import { mediaService } from './media.service.js';
 
@@ -35,23 +33,6 @@ export const chatService = {
     if (!chat) throw new AppError(404, 'Chat no encontrado');
     if (payload.media_asset_id) await mediaService.getById(payload.media_asset_id);
     const message = await ChatModel.addMessage({ chatId, userId, ...payload });
-    const sender = await UserModel.findById(userId);
-    const recipients = await ChatModel.participantIds(chatId);
-    const preview = payload.contenido
-      ? payload.contenido.slice(0, 80)
-      : 'Te ha enviado una imagen';
-
-    await Promise.all(
-      recipients
-        .filter(recipientId => recipientId !== userId)
-        .map(recipientId => NotificationModel.create({
-          usuario_id: recipientId,
-          titulo: `Nuevo mensaje de w/${sender?.username || 'usuario'}`,
-          mensaje: preview,
-          publicacion_id: null,
-          comentario_id: null,
-        }))
-    );
 
     return message;
   },

@@ -240,6 +240,12 @@
   overflow-wrap: break-word;
 }
 
+.commentItemHighlighted {
+  background: color-mix(in srgb, var(--primary-hover) 12%, var(--bg-secondary));
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-hover) 18%, transparent);
+}
+
 .commentMeta {
   font-size: 0.75rem;
   color: var(--secondary);

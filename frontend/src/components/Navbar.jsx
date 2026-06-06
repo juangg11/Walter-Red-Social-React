@@ -7,7 +7,18 @@ import request from '../api/client';
 import { addCacheBust } from '../utils/imageCacheBust';
 import styles from './Navbar.module.css';
 
-export default function Navbar({ user, onSearchChange, notificationCount = 0, activeTab, onTabChange, onLogout, onNotificationsRead }) {
+export default function Navbar({
+  user,
+  onSearchChange,
+  notificationCount = 0,
+  chatNotificationCount = 0,
+  activeTab,
+  onTabChange,
+  onLogout,
+  onNotificationsRead,
+  onNotificationRead,
+  onPostNotificationOpen,
+}) {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -51,16 +62,44 @@ export default function Navbar({ user, onSearchChange, notificationCount = 0, ac
   async function markAsRead(notificationId) {
     try {
       await request(`/notificaciones/${notificationId}/leer`, { method: 'PATCH' });
-      setNotifications(cur => cur.filter(n => n.id !== notificationId));
+      setNotifications(cur => cur.map(n => (
+        n.id === notificationId ? { ...n, leida: 1 } : n
+      )));
+      return true;
     } catch (e) {
       console.error('markAsRead:', e);
+      return false;
+    }
+  }
+
+  async function handleNotificationClick(notification) {
+    const wasUnread = !notification.leida;
+    const readOk = await markAsRead(notification.id);
+    if (wasUnread && readOk) onNotificationRead?.();
+    setShowNotifications(false);
+
+    if (notification.tipo === 'seguimiento' && notification.actor_username) {
+      navigate(`/u/${notification.actor_username}`);
+      return;
+    }
+
+    if (notification.publicacion_id) {
+      try {
+        const post = await request(`/publicaciones/${notification.publicacion_id}?userId=${user?.id}`);
+        onPostNotificationOpen?.({
+          ...post,
+          highlightedCommentId: notification.comentario_id,
+        });
+      } catch (e) {
+        console.error('openNotificationPost:', e);
+      }
     }
   }
 
   async function markAllRead() {
     try {
       await request('/notificaciones/leer-todas', { method: 'PATCH' });
-      setNotifications([]);
+      setNotifications(cur => cur.map(n => ({ ...n, leida: 1 })));
       onNotificationsRead?.();
     } catch (e) {
       console.error('markAllRead:', e);
@@ -136,6 +175,19 @@ export default function Navbar({ user, onSearchChange, notificationCount = 0, ac
               whileTap={{ scale: 0.9 }}
             >
               <MessageCircle size={20} />
+              <AnimatePresence>
+                {chatNotificationCount > 0 && (
+                  <motion.div
+                    className={styles.notificationBadge}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                  >
+                    {chatNotificationCount > 9 ? '9+' : chatNotificationCount}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.span>
             
             <motion.span
@@ -210,16 +262,17 @@ export default function Navbar({ user, onSearchChange, notificationCount = 0, ac
                   </button>
                 </div>
                 {notifications.map(notif => (
-                  <motion.div
+                  <motion.button
+                    type="button"
                     key={notif.id}
-                    onClick={() => markAsRead(notif.id)}
-                    className={styles.notificationItem}
+                    onClick={() => handleNotificationClick(notif)}
+                    className={`${styles.notificationItem} ${notif.leida ? styles.notificationItemRead : styles.notificationItemUnread}`}
                     whileHover={{ x: 4, backgroundColor: "var(--bg-secondary)" }}
                     transition={{ duration: 0.1 }}
                   >
                     <p className={styles.notificationTitle}>{notif.titulo || 'Nueva notificación'}</p>
                     <p className={styles.notificationMsg}>{notif.mensaje}</p>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </>
             ) : (
@@ -243,8 +296,11 @@ Navbar.propTypes = {
   }),
   onSearchChange: PropTypes.func,
   notificationCount: PropTypes.number,
+  chatNotificationCount: PropTypes.number,
   activeTab: PropTypes.string,
   onTabChange: PropTypes.func,
   onLogout: PropTypes.func,
   onNotificationsRead: PropTypes.func,
+  onNotificationRead: PropTypes.func,
+  onPostNotificationOpen: PropTypes.func,
 };

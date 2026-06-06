@@ -91,8 +91,8 @@ function App() {
   const [selectedCommunities, setSelectedCommunities] = useState([]);
   const [communities, setCommunities] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [chatNotificationCount, setChatNotificationCount] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [chatToast, setChatToast] = useState(null);
   const [settings, setSettings] = useState(getInitialSettings);
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,14 +130,22 @@ function App() {
       })
       .catch(e => console.error('Error loading communities:', e));
 
-    request('/notificaciones/no-leidas')
-      .then(data => {
-        if (!ignore) setNotificationCount(data.total);
-      })
-      .catch(e => console.error('Error loading notifications:', e));
+    function loadNotificationCount() {
+      request('/notificaciones/no-leidas')
+        .then(data => {
+          if (!ignore) setNotificationCount(data.total);
+        })
+        .catch(e => console.error('Error loading notifications:', e));
+    }
+
+    loadNotificationCount();
+    const notificationTimer = globalThis.setInterval(() => {
+      loadNotificationCount();
+    }, 15000);
 
     return () => {
       ignore = true;
+      globalThis.clearInterval(notificationTimer);
     };
   }, [userId]);
 
@@ -168,32 +176,17 @@ function App() {
       if (payload.type !== 'chat:message') return;
       if (payload.message.usuario_id === userId) return;
 
-      setNotificationCount(current => current + 1);
-      if (settings.notifications.chatToasts) {
-        setChatToast({
-          id: payload.message.id,
-          title: `Nuevo mensaje de w/${payload.message.username}`,
-          message: payload.message.contenido || 'Te ha enviado una imagen',
-        });
-      }
-
-      if (settings.notifications.desktopMessages && typeof globalThis !== 'undefined' && 'Notification' in globalThis && Notification.permission === 'granted') {
-        new Notification(`w/${payload.message.username}`, {
-          body: payload.message.contenido,
-        });
-      }
+      if (activeTab !== 'messages') setChatNotificationCount(current => current + 1);
     };
 
     ws.onerror = () => {};
 
     return () => ws?.close();
-  }, [userId, settings.notifications.chatToasts, settings.notifications.desktopMessages]);
+  }, [userId, activeTab]);
 
   useEffect(() => {
-    if (!chatToast) return undefined;
-    const timer = globalThis.setTimeout(() => setChatToast(null), 4500);
-    return () => globalThis.clearTimeout(timer);
-  }, [chatToast]);
+    if (activeTab === 'messages') setChatNotificationCount(0);
+  }, [activeTab]);
 
   useEffect(() => {
     function onUnauthorized() {
@@ -218,10 +211,14 @@ function App() {
     setUser(null);
     setCommunities([]);
     setNotificationCount(0);
+    setChatNotificationCount(0);
   }
 
   function handleTabChange(tab) {
-    if (tab === 'messages') navigate('/mensajes');
+    if (tab === 'messages') {
+      setChatNotificationCount(0);
+      navigate('/mensajes');
+    }
     else if (tab === 'communities') navigate('/comunidades');
     else if (tab === 'profile') navigate(`/u/${user.username}`);
     else if (tab === 'settings') navigate('/settings');
@@ -254,10 +251,16 @@ function App() {
           user={user}
           onSearchChange={setSearchQuery}
           notificationCount={notificationCount}
+          chatNotificationCount={chatNotificationCount}
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onLogout={handleLogout}
           onNotificationsRead={() => setNotificationCount(0)}
+          onNotificationRead={() => setNotificationCount(current => Math.max(0, current - 1))}
+          onPostNotificationOpen={post => {
+            setSelectedPost(post);
+            navigate('/');
+          }}
         />
 
         <AnimatePresence mode="wait">
@@ -306,20 +309,6 @@ function App() {
             onClose={() => setSelectedPost(null)}
             user={user}
           />
-        )}
-
-        {chatToast && (
-          <button
-            type="button"
-            className={styles.chatToast}
-            onClick={() => {
-              setChatToast(null);
-              navigate('/mensajes');
-            }}
-          >
-            <strong>{chatToast.title}</strong>
-            <span>{chatToast.message}</span>
-          </button>
         )}
       </div>
     </MotionConfig>

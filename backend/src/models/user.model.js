@@ -123,10 +123,11 @@ export const UserModel = {
   },
 
   async follow(followerId, followedId) {
-    await pool.query(
+    const [result] = await pool.query(
       'INSERT IGNORE INTO usuarios_seguidos (seguidor_id, seguido_id) VALUES (?, ?)',
       [followerId, followedId]
     );
+    return result.affectedRows;
   },
 
   async unfollow(followerId, followedId) {

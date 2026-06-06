@@ -106,11 +106,14 @@ CREATE TABLE IF NOT EXISTS notificaciones (
     usuario_id VARCHAR(36) NOT NULL,
     titulo VARCHAR(255),
     mensaje TEXT,
+    tipo ENUM('comentario', 'seguimiento', 'general') DEFAULT 'general',
+    actor_usuario_id VARCHAR(36) NULL,
     publicacion_id INT,
     comentario_id INT,
     leida BOOLEAN DEFAULT FALSE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_usuario_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (publicacion_id) REFERENCES publicaciones(id) ON DELETE SET NULL,
     FOREIGN KEY (comentario_id) REFERENCES comentarios(id) ON DELETE SET NULL
 );
