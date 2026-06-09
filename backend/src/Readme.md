@@ -3,7 +3,6 @@
 Este módulo contiene la lógica de acoplamiento de la API, encargada de gestionar las peticiones HTTP entrantes, validar los datos de entrada y conectar con la capa de negocio.
 
 ---
-## DTO
 
 ## Controllers
 
@@ -106,3 +105,179 @@ Los controladores actúan como intermediarios entre las rutas HTTP y la capa de 
 | **`unfollow(req, res)`** | Remueve la relación de seguimiento hacia un usuario específico. | `usernameParamDto(req.params)` |
 | **`sharePost(req, res)`** | Permite al usuario autenticado compartir una publicación existente en su propio perfil. | `requiredId(req.params.postId)` |
 | **`unsharePost(req, res)`** | Elimina una publicación previamente compartida del perfil del usuario. | `requiredId(req.params.postId)` |
+
+### DTO'S
+Los DTOs se encargan de la capa de transformación, limpieza y validación estricta de los datos entrantes de las solicitudes HTTP  antes de que la información sea transferida a los servicios de negocio.
+
+---
+
+## Data Transfer Objects (DTOs)
+
+Los DTOs se encargan de la capa de transformación, limpieza y validación estricta de los datos entrantes de las solicitudes HTTP (`req.body`, `req.query`, `req.params`) antes de que la información sea transferida a los servicios de negocio.
+
+### Índice de DTOs
+* [Autenticación (auth.dto.js)](#autenticación-authdtojs)
+* [Chat y Mensajería (chat.dto.js)](#chat-y-mensajería-chatdtojs)
+* [Comentarios (comentarios.dto.js)](#comentarios-comentariosdtojs)
+
+---
+
+### Detalle de los Módulos
+
+#### Autenticación (auth.dto.js)
+
+##### registerDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `email`: Evaluado mediante la función `requiredEmail(body)`.
+  * `username`: Evaluado mediante la función `requiredUsernameValue(body.username)`.
+  * `password`: Evaluado mediante la función `requiredString(body, 'password', 'La contraseña', { min: 6, max: 128 })`.
+
+##### loginDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `email`: Evaluado mediante la función `requiredEmail(body)`.
+  * `password`: Evaluado mediante la función `requiredString(body, 'password', 'La contraseña', { min: 1, max: 128 })`.
+
+##### checkUsernameDto(query)
+* **Origen de datos**: `query`.
+* **Propiedades retornadas**:
+  * `username`: Evaluado mediante la función `requiredUsernameValue(query.username)`.
+
+---
+
+#### Chat y Mensajería (chat.dto.js)
+
+##### createChatDto(body)
+* **Origen de datos**: `body`.
+* **Comportamiento interno**: 
+  * Evalúa si `typeof body.userId === 'string'`. Si es verdadero, aplica `body.userId.trim()`, de lo contrario asigna un string vacío `''`.
+  * Si la variable resultante `userId` está vacía, lanza una excepción `new AppError(400, 'userId es obligatorio')`.
+* **Propiedades retornadas**:
+  * `userId`: String limpio resultante.
+
+##### createMessageDto(body)
+* **Origen de datos**: `body`.
+* **Comportamiento interno**:
+  * Define `contenido` mediante `optionalString(body, 'contenido', 'El mensaje', { max: 5000 })`.
+  * Define `media_asset_id` mediante `optionalId(body.media_asset_id, 'media_asset_id')`.
+  * Si `contenido` y `media_asset_id` son ambos falsos/inexistentes, lanza una excepción `new AppError(400, 'El mensaje o la imagen son obligatorios')`.
+* **Propiedades retornadas**:
+  * `contenido`: El valor obtenido de `optionalString`.
+  * `media_asset_id`: El valor obtenido de `optionalId`.
+  * `respuesta_a_id`: Evaluado mediante `optionalId(body.respuesta_a_id, 'respuesta_a_id')`.
+
+##### chatIdDto(params)
+* **Origen de datos**: `params`.
+* **Propiedades retornadas**:
+  * `chatId`: Evaluado mediante la función `requiredId(params.chatId, 'chatId')`.
+
+---
+
+#### Comentarios (comentarios.dto.js)
+
+##### listComentariosDto(query)
+* **Origen de datos**: `query`.
+* **Propiedades retornadas**:
+  * `publicacion_id`: Evaluado mediante la función `requiredId(query.publicacion_id, 'publicacion_id')`.
+
+##### createComentarioDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `contenido`: Evaluado mediante la función `requiredString(body, 'contenido', 'El contenido', { min: 1, max: 250 })`.
+  * `publicacion_id`: Evaluado mediante la función `requiredId(body.publicacion_id, 'publicacion_id')`.
+  * `comentario_padre_id`: Evaluado mediante la función `optionalId(body.comentario_padre_id, 'comentario_padre_id')`.
+
+---
+
+#### Comunidades (comunidades.dto.js)
+
+##### createComunidadDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `nombre`: Evaluado mediante la función `requiredString(body, 'nombre', 'El nombre', { min: 2, max: 35 })`.
+  * `descripcion`: Evaluado mediante la función `optionalString(body, 'descripcion', 'La descripción', { max: 200 })`.
+  * `categoria`: Evaluado mediante la función `optionalString(body, 'categoria', 'La categoría', { max: 15 })`.
+
+---
+
+#### Media (media.dto.js)
+
+##### mediaSignatureDto(body)
+* **Origen de datos**: `body`.
+* **Comportamiento interno**:
+  * Define la variable interna `folder` mediante `requiredString(body, 'folder', 'folder', { min: 2, max: 120 })`.
+* **Propiedades retornadas**:
+  * `folder`: El valor obtenido de la validación string obligatoria.
+
+##### mediaCommitDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `public_id`: Evaluado mediante la función `requiredString(body, 'public_id', 'public_id', { min: 3, max: 255 })`.
+  * `secure_url`: Evaluado mediante la función `requiredString(body, 'secure_url', 'secure_url', { min: 10, max: 5000 })`.
+  * `resource_type`: Evaluado mediante la función `requiredString(body, 'resource_type', 'resource_type', { min: 3, max: 20 })`.
+  * `format`: Evaluado mediante la función `optionalString(body, 'format', 'format', { max: 20 })`.
+  * `bytes`: Evalúa mediante la expresión `Number.isFinite(Number(body.bytes)) ? Number(body.bytes) : null`.
+  * `width`: Evalúa mediante la expresión `Number.isFinite(Number(body.width)) ? Number(body.width) : null`.
+  * `height`: Evalúa mediante la expresión `Number.isFinite(Number(body.height)) ? Number(body.height) : null`.
+  * `duration`: Evalúa mediante la expresión `Number.isFinite(Number(body.duration)) ? Number(body.duration) : null`.
+
+##### validateMediaResourceType(resourceType)
+* **Origen de datos**: Parámetro directo `resourceType`.
+* **Comportamiento interno**:
+  * Evalúa si el arreglo `['image', 'video', 'raw']` no incluye (`!includes`) el valor de `resourceType`. Si la condición se cumple, ejecuta la instrucción `throw new AppError(400, 'resource_type inválido')`.
+
+---
+
+#### Comunes (common.dto.js)
+
+##### idParamDto(params, key = 'id')
+* **Origen de datos**: `params` e identificador opcional `key` cuyo valor por defecto es `'id'`.
+* **Propiedades retornadas**:
+  * Retorna un objeto con una propiedad dinámica calculada según el valor de `key` (representada mediante `[key]`), cuyo valor asignado es evaluado a través de la función `requiredId(params[key], key)`.
+
+---
+
+#### Publicaciones (publicaciones.dto.js)
+
+##### listPublicacionesDto(query)
+* **Origen de datos**: `query`.
+* **Propiedades retornadas**:
+  * `comunidad_id`: Evaluado mediante la función `optionalId(query.comunidad_id, 'comunidad_id')`.
+  * `userId`: Evalúa mediante la expresión `typeof query.userId === 'string' && query.userId.trim() ? query.userId.trim() : null`.
+
+##### createPublicacionDto(body)
+* **Origen de datos**: `body`.
+* **Comportamiento interno**:
+  * Define la variable interna `mediaAssetId` mediante `optionalId(body.media_asset_id, 'media_asset_id')`.
+* **Propiedades retornadas**:
+  * `titulo`: Evaluado mediante la función `requiredString(body, 'titulo', 'El título', { min: 1, max: 150 })`.
+  * `contenido`: Evaluado mediante la función `optionalString(body, 'contenido', 'El contenido', { max: 1000 })`.
+  * `url_imagen`: Evalúa mediante la expresión `mediaAssetId ? null : requiredUrl(body, 'url_imagen', 'La URL de imagen')`.
+  * `url_video`: Evalúa mediante la expresión `mediaAssetId ? null : requiredUrl(body, 'url_video', 'La URL de vídeo')`.
+  * `media_asset_id`: El valor de la variable interna `mediaAssetId`.
+  * `comunidad_id`: Evaluado mediante la función `requiredId(body.comunidad_id, 'comunidad_id')`.
+
+##### votePublicacionDto(body)
+* **Origen de datos**: `body`.
+* **Comportamiento interno**:
+  * Define la variable interna `tipo_voto` mediante la expresión `typeof body.tipo_voto === 'string' ? body.tipo_voto.trim() : ''`.
+  * Evalúa si el arreglo `['up', 'down']` no incluye (`!includes`) el valor de `tipo_voto`. Si la condición se cumple, ejecuta la instrucción `throw new AppError(400, 'tipo_voto debe ser "up" o "down"')`.
+* **Propiedades retornadas**:
+  * `tipo_voto`: El valor limpio de la variable interna resultante.
+
+---
+
+#### Usuarios (usuarios.dto.js)
+
+##### usernameParamDto(params)
+* **Origen de datos**: `params`.
+* **Propiedades retornadas**:
+  * `username`: Evaluado mediante la función `requiredUsernameValue(params.username)`.
+
+##### updatePerfilDto(body)
+* **Origen de datos**: `body`.
+* **Propiedades retornadas**:
+  * `avatar_url`: Evaluado mediante la función `requiredUrl(body, 'avatar_url', 'avatar_url')`.
+  * `bio`: Evaluado mediante la función `optionalString(body, 'bio', 'La biografía', { max: 280 })`.
+  * `username`: Evaluado mediante la función `optionalString(body, 'username', 'El nombre de usuario', { min: 3, max: 30 })`.
