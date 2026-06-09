@@ -1,6 +1,38 @@
 # Walter Readme Backend
 
 Este módulo contiene la lógica de acoplamiento de la API, encargada de gestionar las peticiones HTTP entrantes, validar los datos de entrada y conectar con la capa de negocio.
+# Arquitectura del Backend
+
+El proyecto está estructurado bajo una arquitectura limpia y desacoplada en capas. Las responsabilidades se dividen rigurosamente para evitar el acoplamiento y facilitar el mantenimiento del código.
+
+## Flujo de una Petición (Request / Response)
+
+A continuación se muestra cómo viajan los datos a través de las distintas capas del sistema desde que el cliente realiza una petición hasta que recibe la respuesta:
+
+```text
+       [ Cliente / Frontend ]
+                 │  ▲
+  (1) Request     │  │ (8) Response (JSON)
+                 ▼  │
+   ┌───────────────────────────────────┐
+   │            CONTROLLER             │  <── Punto de entrada HTTP.
+   └───────────────────────────────────┘
+                 │  ▲
+  (2) Extrae     │  │ (7) Retorna DTO mapeado o
+      datos/id   │  │     Entidad procesada
+                 ▼  │
+   ┌───────────────────────────────────┐
+   │          SERVICE LAYER            │  <── Cerebro del sistema (Lógica de negocio).
+   └───────────────────────────────────┘
+            │  ▲           │  ▲
+   (3) Pide │  │ (6) Datos (4) │  │ (5) Valida/
+      datos │  │ raw      Valida│  │ Mapea
+            ▼  │           ▼  │
+   ┌────────────────┐     ┌────────────────┐
+   │     MODELS     │     │      DTOs      │  <── Validación de entrada y
+   │  (Base Datos)  │     │ (Data Transfer)│      limpieza de salida.
+   └────────────────┘     └────────────────┘
+   ```
 ---
 
 ## Middlewares
@@ -526,4 +558,281 @@ Los servicios contienen la lógica de negocio principal de la aplicación. Se en
 * **Comportamiento interno**:
   * Obtiene la información del usuario a seguir llamando asíncronamente a `await this.getByUsername(username)`.
   * Evalúa si el `user.id` es igual al `viewerId`. Si es verdadero, interrumpe el flujo con `throw new AppError(400, 'No puedes seguirte a ti mismo')`.
-  * Registra la relación de seguimiento ejecutando la consulta asíncrona `await UserModel.follow(viewerId, user.id)` y
+  * Registra la relación de seguimiento ejecutando la consulta asíncrona `await UserModel.follow(viewerId, user.id)` 
+
+## Modelos (Models)
+
+Los modelos se encargan de la persistencia de datos y de interactuar directamente con la base de datos a través de consultas SQL parametrizadas. Abstraen toda la complejidad de las uniones, subconsultas y el control de versiones del esquema de base de datos para proveer una interfaz limpia a la capa de servicios.
+---
+
+### Detalle de los Módulos
+
+#### Mensajes y Chats (chat.model.js)
+
+##### findDirectChat(userA, userB)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona a la base de datos aplicando un `INNER JOIN` entre las tablas `chats` y `chats_participantes`.
+  * Filtra en tiempo de ejecución para encontrar un registro en común donde coincidan simultáneamente los identificadores de ambos usuarios (`userA` y `userB`) limitando el resultado a un único elemento (`LIMIT 1`).
+* **Retorno**: El primer objeto del chat correspondiente si existe, o `null` si no hay un chat directo previo entre ambos.
+
+##### createDirectChat(createdBy, otherUserId)
+* **Comportamiento interno**:
+  * Realiza una inserción asíncrona en la tabla `chats` guardando el identificador del usuario que origina la acción en la columna `creado_por`.
+  * Utiliza el identificador autogenerado (`result.insertId`) para efectuar una inserción masiva en la tabla pivote `chats_participantes`, asociando formalmente tanto al creador como al destinatario al nuevo chat.
+* **Retorno**: El identificador numérico (`insertId`) asignado al chat recién creado.
+
+##### findByIdForUser(chatId, userId)
+* **Comportamiento interno**:
+  * Ejecuta una consulta de selección cruzando las tablas `chats` y `chats_participantes` mediante una relación de igualdad en `chat_id`.
+  * Valida bajo condiciones estrictas que el chat coincida con el `chatId` suministrado y que el `userId` forme parte activa de los registros de participantes.
+* **Retorno**: El objeto del chat validado si el usuario tiene permisos de acceso, o `null` en caso contrario.
+
+##### listForUser(userId)
+* **Comportamiento interno**:
+  * Intenta realizar una consulta compleja con múltiples uniones (`INNER JOIN`) para recuperar los chats del usuario, los datos de perfil de la otra persona vinculada y subconsultas correlacionadas acopladas a `media_assets` para extraer metadatos del último mensaje enviado.
+  * Controla excepciones estructurales a través de un bloque `catch` para interceptar códigos de error relacionados con esquemas heredados o antiguos (`isLegacySchemaError`).
+  * Si se detecta un error de esquema antiguo, degrada la consulta de forma controlada omitiendo el acoplamiento con la tabla `media_assets` y forzando de manera estática el valor `NULL` para la propiedad `ultima_imagen`.
+* **Retorno**: Un arreglo con todos los chats del usuario, ordenados de forma descendente utilizando `COALESCE` para priorizar la fecha del último mensaje o la actualización del chat.
+
+##### listMessages(chatId, userId)
+* **Comportamiento interno**:
+  * Invoca de manera asíncrona al método interno `this.findByIdForUser(chatId, userId)` para garantizar que el solicitante pertenece al chat.
+  * Intenta ejecutar una consulta SQL utilizando una macro de selección predefinida (`MESSAGE_SELECT`) que unifica la tabla `mensajes_chat` con referencias de usuarios, assets multimedia y mensajes de respuesta.
+  * Administra errores estructurales mediante capturas y reintentos escalonados en bloques `catch` si se lanzan fallos de columnas o tablas inexistentes (`isLegacySchemaError`):
+    * *Primer nivel de degradación*: Intenta consultar omitiendo por completo los campos y uniones relativos a la tabla `media
+
+  #### Recursos Multimedia (media.model.js)
+
+##### create(asset)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona mediante la instrucción `INSERT INTO` en la tabla `media_assets`.
+  * Mapea de forma posicional cada una de las propiedades del recurso (`public_id`, `secure_url`, `resource_type`).
+  * Evalúa de forma individual mediante el operador lógico `||` los campos opcionales (`format`, `bytes`, `width`, `height`, `duration`), asignando de forma estática un valor `null` si no vienen informados en el argumento original.
+* **Retorno**: El identificador numérico autogenerado (`insertId`) de la fila correspondiente al recurso multimedia guardado.
+
+##### findById(id)
+* **Comportamiento interno**:
+  * Lanza una consulta de selección directa `SELECT *` sobre la tabla `media_assets` aplicando un filtro estricto por la clave primaria `id`.
+* **Retorno**: El objeto plano con todas las columnas del registro multimedia si se localiza en el almacén, o `null` si no existe coincidencia.
+
+##### findByPublicId(publicId)
+* **Comportamiento interno**:
+  * Realiza una consulta asíncrona de selección sobre la tabla `media_assets` condicionando el filtro a la columna identificadora externa `public_id` provista.
+* **Retorno**: El primer objeto del asset correspondiente si existe, o `null` si el identificador público no está registrado.
+
+#### Notificaciones (notification.model.js)
+
+##### findAllByUser(userId)
+* **Comportamiento interno**:
+  * Ejecuta una consulta compleja a la tabla `notificaciones` aplicando un `LEFT JOIN` hacia la tabla de `publicaciones` (para consolidar el título del post) y un `LEFT JOIN` hacia `users` asignándole el alias `actor` (para extraer el nombre del usuario originario de la acción).
+  * Filtra en tiempo de ejecución las filas donde la propiedad `usuario_id` coincide con el parámetro `userId`.
+  * Aplica un condicional lógico estricto para discriminar el tipo de notificación: solo incluye aquellas donde la columna `tipo` está definida explícitamente como `'comentario'` o `'seguimiento'`, o en su defecto, aquellas de tipo por defecto o nulo (`'general'` o `NULL`) siempre y cuando posean una clave foránea válida vinculada a un post o comentario (`publicacion_id IS NOT NULL` o `comentario_id IS NOT NULL`).
+  * Ordena los resultados cronológicamente de forma descendente y aplica una restricción de rendimiento acotando la selección a un máximo de 50 registros (`LIMIT 50`).
+* **Retorno**: Un arreglo con los objetos de las notificaciones procesadas y formateadas que cumplen los criterios de filtrado.
+
+##### countUnread(userId)
+* **Comportamiento interno**:
+  * Realiza una consulta de agregación utilizando la función estándar `COUNT(*)` sobre la tabla `notificaciones`.
+  * Restringe el conteo a los registros que pertenezcan al identificador del usuario, que mantengan la columna booleana `leida = FALSE` y que respeten los mismos criterios lógicos de discriminación de tipología del método de listado (`tipo`, `publicacion_id`, `comentario_id`).
+* **Retorno**: Un valor numérico entero que representa el total acumulado de las notificaciones no leídas de dicho usuario.
+
+##### create({ usuario_id, titulo, mensaje, publicacion_id, comentario_id, tipo = 'general', actor_usuario_id = null })
+* **Comportamiento interno**:
+  * Lanza una instrucción asíncrona de inserción SQL en la tabla `notificaciones` pasando de manera parametrizada todos los metadatos e identificadores relacionales recibidos en el argumento.
+  * Evalúa de forma predeterminada mediante la firma de la función que la columna `tipo` se guarde con el valor `'general'` y la columna `actor_usuario_id` con el valor `null` en caso de omitirse en la invocación.
+* **Retorno**: `undefined` (ninguno).
+
+##### markAsRead(id, userId)
+* **Comportamiento interno**:
+  * Ejecuta una instrucción de actualización (`UPDATE`) sobre la tabla `notificaciones` asignando de forma explícita el valor booleano `TRUE` a la columna `leida`.
+  * Restringe la operación condicionando el filtro simultáneamente a la clave primaria del registro `id` y a la clave del usuario propietario `usuario_id` para evitar mutaciones no autorizadas.
+* **Retorno**: El entero numérico que refleja la cantidad de filas que sufrieron modificaciones en la base de datos (`result.affectedRows`).
+
+##### markAllRead(userId)
+* **Comportamiento interno**:
+  * Modifica de forma masiva el estado de los registros en la tabla `notificaciones` conmutando el campo `leida = TRUE`.
+  * Acota la actualización de manera exclusiva a las filas correspondientes al `userId` provisto que encajen dentro de los patrones de tipología válidos (`comentario`, `seguimiento` o generales asociadas a posts o comentarios).
+* **Retorno**: `undefined` (ninguno).
+
+##### delete(id, userId)
+* **Comportamiento interno**:
+  * Invoca de manera asíncrona la sentencia destructiva `DELETE FROM notificaciones` limitando la acción a la coincidencia exacta del identificador de la notificación y el identificador del usuario propietario.
+* **Retorno**: La cantidad de filas afectadas por la operación de borrado físico (`result.affectedRows`).
+
+#### Publicaciones (post.model.js)
+
+##### findAll({ comunidad_id, userId })
+* **Comportamiento interno**:
+  * Inicializa una cadena de texto vacía `where` y un arreglo plano indexado `params` para la inyección de variables.
+  * Evalúa condicionalmente la presencia de la variable `userId`. Si es evaluada como verdadera, empuja de forma secuencial tres veces consecutivas el identificador del usuario al arreglo de parámetros, con el fin de saciar las incógnitas de las subconsultas inyectadas mediante funciones dinámicas (`voteSelect`, `membershipSelect`, `sharedSelect`).
+  * Evalúa condicionalmente la presencia de la propiedad `comunidad_id`. Si se cumple, redefine el contenido de la variable `where` para estructurar la cláusula de filtrado `'WHERE p.comunidad_id = ?'` e incorpora dicho identificador al final del arreglo de parámetros.
+  * Lanza de forma asíncrona una consulta SQL de combinación masiva uniendo las macros y constantes globales de selección (`BASE_COLUMNS`, `BASE_FROM`) junto con las llamadas dinámicas que adjuntan subconsultas correlacionadas `EXISTS` e `INNER SELECT` para determinar estados contextuales del usuario (`voto_usuario`, `es_miembro_comunidad`, `compartido_por_usuario`).
+  * Ordena los registros resultantes de forma descendente priorizando la columna `fecha_creacion` de la publicación.
+* **Retorno**: Una lista de objetos con las publicaciones enriquecidas con información de usuario, comunidad, assets multimedia y estados personalizados.
+
+##### findById(id, userId = null)
+* **Comportamiento interno**:
+  * Configura dinámicamente el arreglo de parámetros SQL: si recibe un `userId` válido, introduce tres instancias del mismo identificador seguidas por el `id` de la publicación; en caso contrario, inicializa el arreglo exclusivamente con el `id` de la publicación.
+  * Ejecuta la consulta combinando las columnas base (`BASE_COLUMNS`) y las subconsultas contextuales del usuario (`voteSelect`, `membershipSelect`, `sharedSelect`) unificando tablas mediante `LEFT JOIN` y filtrando estrictamente por la coincidencia en `p.id`.
+* **Retorno**: El objeto completo de la publicación con todos sus metadatos relacionales asociados si se localiza, o `null` si no se encuentra registro alguno.
+
+##### findRawById(id)
+* **Comportamiento interno**:
+  * Ejecuta una consulta de selección directa y aislada `SELECT * FROM publicaciones` buscando una coincidencia única para la clave primaria de la publicación.
+* **Retorno**: El objeto de la publicación en su estado original de la tabla sin uniones externas, o `null`.
+
+##### findByUserId(userId, viewerId = null)
+* **Comportamiento interno**:
+  * Estructura los parámetros de la consulta parametrizada inyectando en primera instancia el `viewerId` (si existe) para resolver la subconsulta de estado compartido (`sharedSelect`), y posteriormente el `userId` del creador del contenido.
+  * Lanza una consulta SQL unificando las publicaciones con las estructuras de usuarios, comunidades y assets, filtrando estrictamente los registros donde `p.usuario_id = ?` y ordenándolos de manera descendente.
+* **Retorno**: Un arreglo con todas las publicaciones creadas por el usuario específico.
+
+##### findSharedByUserId(userId, viewerId = null)
+* **Comportamiento interno**:
+  * Mapea los argumentos operacionales inyectando el identificador del observador (`viewerId`) si está presente y el identificador del usuario propietario de la acción (`userId`).
+  * Realiza una consulta asíncrona tomando como eje la tabla asociativa `publicaciones_compartidas` (`pc`), aplicando un `INNER JOIN` hacia `publicaciones` (`p`) y acoplando mediante `LEFT JOIN` las tablas satélites de usuarios, comunidades y assets multimedia.
+  * Extrae el timestamp nativo de la tabla pivot bajo el alias `compartido_en` y filtra las filas por la condición `WHERE pc.usuario_id = ?`, organizando el histórico descendentemente por dicha fecha.
+* **Retorno**: Una lista de las publicaciones que el usuario ha compartido en la plataforma.
+
+##### create({ titulo, contenido, url_imagen, url_video, media_asset_id, comunidad_id, usuarioId })
+* **Comportamiento interno**:
+  * Ejecuta de forma asíncrona una instrucción SQL `INSERT INTO` en la tabla `publicaciones` mapeando ordenadamente los títulos, cuerpos y referencias.
+  * Evalúa de forma lógica mediante el operador `||` la propiedad `media_asset_id`, forzando el valor a `null` si la variable resulta falsy en tiempo de ejecución.
+* **Retorno**: El identificador entero autogenerado (`insertId`) de la nueva publicación creada.
+
+##### delete(id)
+* **Comportamiento interno**:
+  * Lanza de manera asíncrona la instrucción atómica y destructiva `DELETE FROM publicaciones WHERE id = ?`.
+* **Retorno**: `undefined` (ninguno).
+
+##### incrementVotes(postId, delta)
+* **Comportamiento interno**:
+  * Modifica el estado numérico de una publicación ejecutando un `UPDATE` que adiciona de forma aritmética el valor entero recibido en el parámetro `delta` a la columna `votos`.
+* **Retorno**: `undefined` (ninguno).
+
+##### share(userId, postId)
+* **Comportamiento interno**:
+  * Inserta una nueva fila de relación asociativa en la tabla pivot utilizando la instrucción permisiva `INSERT IGNORE INTO publicaciones_compartidas`. Esto garantiza la consistencia e integridad del almacenamiento impidiendo duplicados o interrupciones por violaciones de clave única si el usuario ya había compartido el mismo post previamente.
+* **Retorno**: `undefined` (ninguno).
+
+##### unshare(userId, postId)
+* **Comportamiento interno**:
+  * Ejecuta una instrucción destructiva de borrado físico `DELETE FROM publicaciones_compartidas` filtrando rigurosamente por el identificador del usuario y el identificador de la publicación asociada.
+* **Retorno**: `undefined` (ninguno).
+
+##### recalculateVotes(postId)
+* **Comportamiento interno**:
+  * Ejecuta una sentencia SQL de actualización avanzada (`UPDATE`) apuntando a la tabla `publicaciones`.
+  * Inyecta una subconsulta de agregación matemática que calcula en tiempo real la suma (`SUM`) de los votos de la tabla `votos_usuarios` relacionados al post. Utiliza una estructura condicional `CASE` interna que computa valores discretos ponderados: asigna un valor de `1` si el registro es de tipo `'up'`, un valor de `-1` si es de tipo `'down'` y un valor neutro de `0` para cualquier otra condición descrita.
+  * Envuelve el resultado de la sumatoria total en la función `COALESCE(..., 0)` para mitigar y subsanar valores nulos indeseados en caso de que la publicación no cuente con ningún voto remanente en el histórico, aplicando los cambios únicamente para la fila que concuerde con el `postId` provisto.
+* **Retorno**: `undefined` (ninguno).
+
+#### Gestión de Usuarios (user.model.js)
+
+##### findByEmailOrUsername(email, username)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona de selección `SELECT id` sobre la tabla `users`.
+  * Evalúa de forma condicional mediante una cláusula `OR` si existen coincidencias con el correo electrónico o con el nombre de usuario provistos en los argumentos.
+* **Retorno**: Un arreglo con los registros que cumplan la condición (habitualmente conteniendo los identificadores encontrados).
+
+##### isAdmin(userId)
+* **Comportamiento interno**:
+  * Realiza una consulta asíncrona a la tabla `users` para recuperar únicamente el valor de la columna de privilegios `is_admin` correspondiente al identificador provisto.
+  * Evalúa lógicamente mediante una expresión relacional si la longitud del arreglo devuelto es mayor a cero y si el valor estricto de la primera fila (`rows[0].is_admin`) es igual a `1`.
+* **Retorno**: Un valor booleano (`true` / `false`) que determina si el usuario posee privilegios de administrador.
+
+##### findByEmail(email)
+* **Comportamiento interno**:
+  * Lanza una consulta parametrizada `SELECT *` sobre la tabla `users` aplicando un filtro de igualdad estricto para la columna `email`.
+* **Retorno**: El objeto completo del usuario si existe en la base de datos, o `null` si la consulta no devuelve registros.
+
+##### findByUsername(username)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona de selección para extraer un conjunto delimitado de columnas (`id`, `email`, `username`, `avatar_url`, `bio`, `is_admin`, `fecha_creacion`) de la tabla `users` filtrando por el nombre de usuario.
+* **Retorno**: El objeto filtrado del usuario si se localiza en el almacén, o `null` en caso contrario.
+
+##### findById(id)
+* **Comportamiento interno**:
+  * Realiza una consulta estructurada a la tabla `users` solicitando las columnas de perfil principales de identidad y filtrando el registro por su clave primaria `id`.
+* **Retorno**: El objeto correspondiente al perfil básico del usuario si existe, o `null` si no hay coincidencias.
+
+##### search(query, currentUserId)
+* **Comportamiento interno**:
+  * Inicializa una variable de búsqueda `term` concatenando comodines porcentuales (`%`) antes y después de la cadena de texto recibida para habilitar búsquedas parciales.
+  * Ejecuta una consulta de selección sobre la tabla `users` evaluando mediante la cláusula `LIKE` si el término coincide de forma parcial con las columnas `username` o `bio`.
+  * Excluye del conjunto de resultados al usuario solicitante mediante la condición de desigualdad estricta `id <> ?`.
+* **Retorno**: Un arreglo de objetos con los usuarios que encajen con los criterios de búsqueda provistos.
+
+##### countsByUserId(userId)
+* **Comportamiento interno**:
+  * Lanza de forma asíncrona tres consultas de agregación en paralelo utilizando la función estándar `COUNT(*)` sobre distintas tablas del esquema:
+    * Cuenta las filas en la tabla `publicaciones` donde el creador coincide con el `userId`.
+    * Cuenta las filas en la tabla `usuarios_seguidos` donde la columna `seguido_id` coincide con el `userId` (para obtener la cantidad de seguidores).
+    * Cuenta las filas en la tabla `usuarios_seguidos` donde la columna `seguidor_id` coincide con el `userId` (para obtener la cantidad de cuentas seguidas).
+* **Retorno**: Un objeto literal compuesto con las propiedades calculadas `posts`, `followers` y `following`.
+
+##### followersByUserId(userId)
+* **Comportamiento interno**:
+  * Realiza una consulta relacional aplicando una operación `INNER JOIN` entre las tablas `users` y `usuarios_seguidos`.
+  * Acopla las tablas equiparando el identificador del usuario con la clave foránea `seguidor_id` y filtra los registros bajo la condición `seguido_id = ?`.
+  * Organiza las filas de forma descendente por la columna `fecha_creacion` de la relación y acota el rendimiento a un umbral máximo de 20 registros (`LIMIT 20`).
+* **Retorno**: Una lista con los perfiles simplificados de los seguidores pertenecientes al usuario.
+
+##### followingByUserId(userId)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona combinando las tablas `users` y `usuarios_seguidos` mediante un `INNER JOIN`.
+  * Empareja las estructuras asociando el identificador del usuario a la columna `seguido_id` y condiciona el criterio de selección a las filas donde `seguidor_id = ?`.
+  * Aplica un criterio de ordenación cronológica decreciente y restringe el volumen a un máximo de 20 filas.
+* **Retorno**: Una lista con los perfiles simplificados de las cuentas a las que sigue el usuario actualmente.
+
+##### isFollowing(followerId, followedId)
+* **Comportamiento interno**:
+  * Evalúa de forma condicional mediante una compuerta lógica si alguno de los dos identificadores requeridos está ausente (`!followerId || !followedId`); si se cumple, interrumpe el flujo inmediatamente.
+  * Lanza una consulta de verificación rápida sobre la tabla pivot `usuarios_seguidos` aplicando un filtro simultáneo para el seguidor y el seguido junto con una restricción `LIMIT 1`.
+* **Retorno**: Un valor booleano (`true` / `false`) que determina si la longitud de la colección resultante es mayor a cero.
+
+##### follow(followerId, followedId)
+* **Comportamiento interno**:
+  * Ejecuta una instrucción asíncrona de inserción utilizando la sentencia permisiva `INSERT IGNORE INTO usuarios_seguidos`. Esto previene interrupciones en el flujo o duplicidades si la relación de seguimiento ya se encontraba registrada en la base de datos.
+* **Retorno**: El número entero que refleja la cantidad de filas que sufrieron alteraciones tras la consulta (`result.affectedRows`).
+
+##### unfollow(followerId, followedId)
+* **Comportamiento interno**:
+  * Invoca una sentencia destructiva parametrizada `DELETE FROM usuarios_seguidos` acotando la remoción física de la fila a la coincidencia exacta de los campos `seguidor_id` y `seguido_id`.
+* **Retorno**: `undefined` (ninguno).
+
+##### usernameExists(username)
+* **Comportamiento interno**:
+  * Realiza una consulta optimizada `SELECT 1` sobre la tabla `users` condicionando la búsqueda a la igualdad en la columna de texto `username` incorporando un límite estricto `LIMIT 1`.
+* **Retorno**: Un valor booleano derivado de verificar si la colección de filas retornada contiene al menos un elemento.
+
+##### updateProfile(userId, { avatar_url, bio, username })
+* **Comportamiento interno**:
+  * Ejecuta una instrucción de modificación (`UPDATE`) sobre la tabla `users` reemplazando los valores de las columnas `avatar_url`, `bio` y `username`.
+  * Restringe el impacto de la mutación aplicando una cláusula de salvaguarda filtrando por la clave primaria `id = ?`.
+  * Reconsulta asíncronamente las columnas del registro modificado invocando internamente al método `this.findById(userId)`.
+* **Retorno**: El objeto actualizado con las nuevas propiedades del usuario, o `null` si la operación no alteró ninguna fila.
+
+#### Gestión de Votos (vote.model.js)
+
+##### find(userId, postId)
+* **Comportamiento interno**:
+  * Ejecuta una consulta asíncrona de selección `SELECT *` sobre la tabla pivot `votos_usuarios`.
+  * Filtra el registro aplicando una coincidencia simultánea para las columnas foráneas de control `usuario_id` y `publicacion_id`.
+* **Retorno**: El objeto del voto correspondiente si ya existe una interacción previa registrada, o `null` en caso contrario.
+
+##### create(userId, postId, tipo_voto)
+* **Comportamiento interno**:
+  * Realiza una instrucción SQL de inserción parametrizada para persistir un nuevo registro dentro de la tabla `votos_usuarios` mapeando el usuario, el post y la dirección cualitativa de la valoración (`tipo_voto`).
+* **Retorno**: `undefined` (ninguno).
+
+##### update(userId, postId, tipo_voto)
+* **Comportamiento interno**:
+  * Lanza una sentencia de modificación (`UPDATE`) sobre la tabla `votos_usuarios` asignando el nuevo estado recibido en el parámetro al campo `tipo_voto`.
+  * Delimita el rango de la actualización aplicando condiciones de igualdad estricta cruzando el `usuario_id` y el `publicacion_id`.
+* **Retorno**: `undefined` (ninguno).
+
+##### delete(userId, postId)
+* **Comportamiento interno**:
+  * Invoca de forma asíncrona la sentencia destructiva `DELETE FROM votos_usuarios` removiendo físicamente el registro donde coincidan las claves foráneas de usuario y publicación suministradas.
+* **Retorno**: `undefined` (ninguno).
