@@ -337,3 +337,193 @@ Los DTOs se encargan de la capa de transformación, limpieza y validación estri
   * `avatar_url`: Evaluado mediante la función `requiredUrl(body, 'avatar_url', 'avatar_url')`.
   * `bio`: Evaluado mediante la función `optionalString(body, 'bio', 'La biografía', { max: 280 })`.
   * `username`: Evaluado mediante la función `optionalString(body, 'username', 'El nombre de usuario', { min: 3, max: 30 })`.
+
+---
+
+## Servicios (Services)
+
+Los servicios contienen la lógica de negocio principal de la aplicación. Se encargan de interactuar con los modelos de la base de datos, gestionar flujos de datos asíncronos, aplicar transformaciones complejas y lanzar excepciones controladas cuando no se cumplen las reglas de negocio.
+---
+
+### Detalle de los Módulos
+
+#### Autenticación (auth.service.js)
+
+##### toAuthUser(user)
+* **Comportamiento interno**:
+  * Inicializa un objeto literal `authUser` con las propiedades estructurales `id: user.id`, `email: user.email` y `username: user.username`.
+  * Evalúa condicionalmente si `user.avatar_url !== undefined`. Si se cumple, añade la propiedad `avatar_url` a `authUser`.
+  * Evalúa condicionalmente si `user.bio !== undefined`. Si se cumple, añade la propiedad `bio` a `authUser`.
+  * Evalúa condicionalmente si `user.fecha_creacion !== undefined`. Si se cumple, añade la propiedad `fecha_creacion` a `authUser`.
+  * Evalúa condicionalmente si `user.is_admin !== undefined`. Si se cumple, asigna a la propiedad `authUser.isAdmin` el resultado booleano de la expresión `user.is_admin === 1 || user.is_admin === true`.
+* **Retorno**: El objeto transformado `authUser`.
+
+##### register({ email, username, password })
+* **Comportamiento interno**:
+  * Ejecuta la consulta asíncrona `await UserModel.findByEmailOrUsername(email, username)`.
+  * Evalúa si la longitud del arreglo devuelto (`existing.length`) es mayor que `0`. Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(409, 'Email o username ya en uso')`.
+  * Genera un identificador único invocando a la función `uuidv4()`.
+  * Genera el hash de la contraseña mediante la instrucción asíncrona `await bcrypt.hash(password, 12)`.
+  * Inserta el nuevo registro ejecutando `await UserModel.create({ id, email, username, passwordHash })`.
+  * Genera un token JWT firmando las propiedades `{ id, email, username }` con la clave secreta `process.env.JWT_SECRET` y una expiración configurada en `'7d'`.
+  * Recupera el registro final de la base de datos llamando asíncronamente a `await UserModel.findById(id)`.
+* **Retorno**: Un objeto que contiene el `token` y la propiedad `user` evaluada internamente mediante el método `this.toAuthUser(user)`.
+
+##### login({ email, password })
+* **Comportamiento interno**:
+  * Ejecuta la consulta asíncrona `await UserModel.findByEmail(email)`.
+  * Evalúa si el objeto `user` es falso o inexistente. Si se cumple, ejecuta la instrucción `throw new AppError(401, 'Credenciales incorrectas')`.
+  * Evalúa la contraseña comparando el texto plano con el hash mediante `await bcrypt.compare(password, user.password)`.
+  * Si el resultado booleano `valid` es falso, interrumpe el flujo ejecutando `throw new AppError(400)
+
+## comunidades.service.js
+
+##### getAll(userId)
+* **Comportamiento interno**:
+  * Ejecuta la consulta asíncrona `await CommunityModel.findAll(userId)`.
+* **Retorno**: Una lista con todas las comunidades asociadas al usuario.
+
+##### getById(id, userId)
+* **Comportamiento interno**:
+  * Recupera el registro de la comunidad llamando asíncronamente a `await CommunityModel.findById(id, userId)`.
+  * Evalúa si no se encontró la comunidad (`!comunidad`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Comunidad no encontrada')`.
+* **Retorno**: El objeto `comunidad` encontrado.
+
+##### create({ nombre, descripcion, categoria, creadorId })
+* **Comportamiento interno**:
+  * Inserta la nueva comunidad ejecutando `await CommunityModel.create({ nombre, descripcion, categoria, creadorId })` y almacena el identificador generado en `comunidadId`.
+  * Registra al creador como miembro ejecutando `await CommunityModel.addMember(comunidadId, creadorId)`.
+  * Incrementa el contador de miembros de la comunidad invocando a `await CommunityModel.incrementMembers(comunidadId)`.
+  * Recupera la comunidad creada llamando de forma asíncrona a `this.getById(comunidadId, creadorId)`.
+* **Retorno**: El objeto de la comunidad recién creada con los datos del creador.
+
+##### join(comunidadId, userId)
+* **Comportamiento interno**:
+  * Verifica la existencia de la comunidad invocando asíncronamente a `await this.getById(comunidadId, userId)`.
+  * Evalúa si el usuario ya es miembro de la comunidad llamando a `await CommunityModel.isMember(comunidadId, userId)`. Si es verdadero (`alreadyMember`), interrumpe y finaliza la ejecución de la función sin realizar cambios.
+  * Añade al usuario como miembro de la comunidad ejecutando `await CommunityModel.addMember(comunidadId, userId)`.
+  * Incrementa el contador de miembros invocando a `await CommunityModel.incrementMembers(comunidadId)`.
+* **Retorno**: `undefined` (ninguno).
+
+##### leave(comunidadId, userId)
+* **Comportamiento interno**:
+  * Remueve al usuario de la comunidad ejecutando la consulta asíncrona `await CommunityModel.removeMember(comunidadId, userId)` y almacena el número de filas afectadas en `affectedRows`.
+  * Evalúa si el valor de `affectedRows` es igual a `0`. Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'No eres miembro de esta comunidad')`.
+  * Decrementa el contador de miembros invocando a `await CommunityModel.decrementMembers(comunidadId)`.
+* **Retorno**: `undefined` (ninguno).
+
+---
+
+## media.service.js
+
+##### createSignature({ folder, userId })
+* **Comportamiento interno**:
+  * Calcula el timestamp actual en segundos mediante `Math.floor(Date.now() / 1000)`.
+  * Estructura un objeto `paramsToSign` con las propiedades `folder`,
+
+## publicaciones.service.js
+
+##### getAll({ comunidad_id, userId })
+* **Comportamiento interno**:
+  * Ejecuta la consulta asíncrona `await PostModel.findAll({ comunidad_id, userId })`.
+* **Retorno**: Una lista con todas las publicaciones filtradas según los parámetros proporcionados.
+
+##### getById(id, userId)
+* **Comportamiento interno**:
+  * Recupera el registro de la publicación llamando asíncronamente a `await PostModel.findById(id, userId)`.
+  * Evalúa si no se encontró la publicación (`!post`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Publicación no encontrada')`.
+* **Retorno**: El objeto `post` encontrado.
+
+##### create({ titulo, contenido, url_imagen, url_video, media_asset_id, comunidad_id, usuarioId })
+* **Comportamiento interno**:
+  * Busca la comunidad llamando asíncronamente a `await CommunityModel.findById(comunidad_id)`.
+  * Evalúa si la comunidad no existe (`!comunidad`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Comunidad no encontrada')`.
+  * Verifica si el usuario es miembro mediante la consulta asíncrona `await CommunityModel.isMember(comunidad_id, usuarioId)`. Si no lo es (`!isMember`), interrumpe el flujo ejecutando `throw new AppError(403, 'Debes pertenecer a la comunidad para publicar')`.
+  * Inicializa las variables `finalImageUrl` y `finalVideoUrl` con los valores recibidos o `null` por defecto.
+  * Evalúa si se proporcionó un `media_asset_id`. Si es verdadero, invoca asíncronamente a `await mediaService.getById(media_asset_id)` y asigna la propiedad `secure_url` a `finalImageUrl` o `finalVideoUrl` según corresponda si el `resource_type` es `'image'` o `'video'`.
+  * Inserta la nueva publicación ejecutando la consulta asíncrona `await PostModel.create({...})` y almacena el identificador generado en `postId`.
+  * Incrementa el contador de publicaciones de la comunidad invocando a `await CommunityModel.incrementPosts(comunidad_id)`.
+  * Recupera el registro final de la publicación llamando de forma asíncrona a `this.getById(postId, usuarioId)`.
+* **Retorno**: El objeto de la publicación recién creada.
+
+##### remove(id, userId)
+* **Comportamiento interno**:
+  * Recupera los datos base de la publicación mediante `await PostModel.findRawById(id)`.
+  * Evalúa si la publicación no existe (`!post`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Publicación no encontrada')`.
+  * Verifica si el `usuario_id` de la publicación difiere del `userId` del solicitante. Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(403, 'No autorizado')`.
+  * Elimina el registro llamando asíncronamente a `await PostModel.delete(id)`.
+  * Decrementa el contador de publicaciones de la comunidad asociada ejecutando `await CommunityModel.decrementPosts(post.comunidad_id)`.
+* **Retorno**: `undefined` (ninguno).
+
+##### vote(postId, userId, tipo_voto)
+* **Comportamiento interno**:
+  * Busca la publicación llamando asíncronamente a `await PostModel.findRawById(postId)`.
+  * Evalúa si la publicación no existe (`!post`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Publicación no encontrada')`.
+  * Busca un voto previo del usuario en esa publicación ejecutando `await VoteModel.find(userId, postId)` y guarda el resultado en `existing`.
+  * Evalúa si ya existe un voto (`existing`):
+    * Si el `votoActual` es idéntico al `tipo_voto` solicitado, elimina el voto llamando a `await VoteModel.delete(userId, postId)`, recalcula los votos con `await PostModel.recalculateVotes(postId)`, obtiene la publicación actualizada con `await this.getById(postId, userId)` y retorna un objeto indicando que el voto fue eliminado.
+    * Si el `votoActual` es diferente, actualiza el registro llamando a `await VoteModel.update(userId, postId, tipo_voto)`, recalcula con `await PostModel.recalculateVotes(postId)`, obtiene la publicación actualizada con `await this.getById(postId, userId)` y retorna un objeto indicando que el voto fue actualizado.
+  * En caso de no existir un voto previo, inserta un nuevo registro ejecutando `await VoteModel.create(userId, postId, tipo_voto)`.
+  * Recalcula los votos de la publicación invocando a `await PostModel.recalculateVotes(postId)`.
+  * Recupera el estado final de la publicación llamando asíncronamente a `await this.getById(postId, userId)`.
+* **Retorno**: Un objeto con las propiedades `mensaje`, `voto` (el tipo de voto actual o null), `votos` (el conteo actualizado) y el objeto `post`.
+
+---
+
+## usuarios.service.js
+
+##### getByUsername(username)
+* **Comportamiento interno**:
+  * Busca al usuario ejecutando la consulta asíncrona `await UserModel.findByUsername(username)`.
+  * Evalúa si no se encontró al usuario (`!user`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Usuario no encontrado')`.
+* **Retorno**: El objeto `user` encontrado.
+
+##### isAdmin(userId)
+* **Comportamiento interno**:
+  * Ejecuta la consulta asíncrona `return UserModel.isAdmin(userId)`.
+* **Retorno**: Un valor booleano que determina si el usuario posee privilegios de administrador.
+
+##### getPublicaciones(username, viewerId = null)
+* **Comportamiento interno**:
+  * Obtiene la información del usuario llamando asíncronamente a `await this.getByUsername(username)`.
+  * Recupera las publicaciones del usuario ejecutando la consulta `await PostModel.findByUserId(user.id, viewerId)`.
+* **Retorno**: Una lista con las publicaciones creadas por el usuario.
+
+##### getComentarios(username)
+* **Comportamiento interno**:
+  * Obtiene la información del usuario llamando asíncronamente a `await this.getByUsername(username)`.
+  * Recupera los comentarios del usuario ejecutando la consulta `await CommentModel.findByUserId(user.id)`.
+* **Retorno**: Una lista con los comentarios realizados por el usuario.
+
+##### getCompartidos(username, viewerId = null)
+* **Comportamiento interno**:
+  * Obtiene la información del usuario llamando asíncronamente a `await this.getByUsername(username)`.
+  * Recupera las publicaciones compartidas ejecutando la consulta `await PostModel.findSharedByUserId(user.id, viewerId)`.
+* **Retorno**: Una lista con las publicaciones compartidas por el usuario.
+
+##### getComunidades(username)
+* **Comportamiento interno**:
+  * Obtiene la información del usuario llamando asíncronamente a `await this.getByUsername(username)`.
+  * Recupera las comunidades asociadas ejecutando la consulta `await CommunityModel.findByUserId(user.id)`.
+* **Retorno**: Una lista con las comunidades a las que pertenece el usuario.
+
+##### getProfile(username, viewerId = null)
+* **Comportamiento interno**:
+  * Obtiene los datos base del usuario invocando de forma asíncrona a `await this.getByUsername(username)`.
+  * Ejecuta de forma paralela mediante `Promise.all` las consultas: conteos de actividad (`UserModel.countsByUserId`), lista de seguidores (`UserModel.followersByUserId`), lista de seguidos (`UserModel.followingByUserId`) y verificación de seguimiento activo (`UserModel.isFollowing`).
+* **Retorno**: Un objeto compuesto por los datos del usuario, las propiedades booleanas `is_me` e `is_following`, y los arreglos/objetos de `counts`, `followers` y `following`.
+
+##### updatePerfil(userId, { avatar_url, bio, username })
+* **Comportamiento interno**:
+  * Obtiene el perfil actual llamando asíncronamente a `await UserModel.findById(userId)`.
+  * Evalúa si el usuario no existe (`!current`). Si es verdadero, interrumpe el flujo ejecutando `throw new AppError(404, 'Usuario no encontrado')`.
+  * Evalúa si se proporciona un nuevo `username` y si este difiere del actual. Si es verdadero, comprueba su disponibilidad llamando a `await UserModel.usernameExists(username)`; si ya existe, interrumpe el flujo con `throw new AppError(400, 'El nombre de usuario ya existe')`.
+  * Actualiza los datos del perfil invocando a `await UserModel.updateProfile(userId, {...})` empleando el operador de fusión nula (`??`) para preservar los valores anteriores que no se hayan enviado.
+  * Evalúa si la actualización falló o no devolvió un usuario (`!user`). Si es verdadero, lanza `throw new AppError(404, 'Usuario no encontrado')`.
+* **Retorno**: El objeto `user` con los campos actualizados.
+
+##### follow(username, viewerId)
+* **Comportamiento interno**:
+  * Obtiene la información del usuario a seguir llamando asíncronamente a `await this.getByUsername(username)`.
+  * Evalúa si el `user.id` es igual al `viewerId`. Si es verdadero, interrumpe el flujo con `throw new AppError(400, 'No puedes seguirte a ti mismo')`.
+  * Registra la relación de seguimiento ejecutando la consulta asíncrona `await UserModel.follow(viewerId, user.id)` y
