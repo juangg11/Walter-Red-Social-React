@@ -836,3 +836,179 @@ Los modelos se encargan de la persistencia de datos y de interactuar directament
 * **Comportamiento interno**:
   * Invoca de forma asíncrona la sentencia destructiva `DELETE FROM votos_usuarios` removiendo físicamente el registro donde coincidan las claves foráneas de usuario y publicación suministradas.
 * **Retorno**: `undefined` (ninguno).
+
+## Enrutamiento (Routes)
+
+Las rutas mapean los endpoints HTTP expuestos hacia el cliente, aplicando middlewares de seguridad o sesión y derivando la ejecución a los controladores.
+---
+
+### Detalle de los Módulos
+
+#### Autenticación (auth.js)
+
+##### POST /register
+* **Comportamiento interno**: Registra el método `POST` en `/register` bajo el middleware de tasa `authRateLimit` y envuelve a `authController.register` en `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /login
+* **Comportamiento interno**: Registra el método `POST` en `/login` bajo el middleware de tasa `authRateLimit` y envuelve a `authController.login` en `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /check-username
+* **Comportamiento interno**: Registra el método `GET` en `/check-username` sin restricciones perimetrales y envuelve a `authController.checkUsername` en `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Mensajería y Chats (chat.js)
+
+##### Middlewares Globales
+* **Comportamiento interno**: Aplica `router.use(authMiddleware)`, forzando la validación de sesión tokenizada para todas las subrutas del archivo.
+
+##### GET /usuarios
+* **Comportamiento interno**: Mapea `GET` en `/usuarios` delegando en `chatController.searchUsers` a través de `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /
+* **Comportamiento interno**: Mapea `GET` en `/` delegando en `chatController.list` a través de `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /
+* **Comportamiento interno**: Mapea `POST` en `/` delegando en `chatController.create` a través de `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /:chatId/mensajes
+* **Comportamiento interno**: Mapea `GET` en la ruta dinámica `/:chatId/mensajes` delegando en `chatController.messages` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /:chatId/mensajes
+* **Comportamiento interno**: Mapea `POST` en la ruta dinámica `/:chatId/mensajes` delegando en `chatController.send` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Comentarios (comentarios.js)
+
+##### GET /
+* **Comportamiento interno**: Mapea `GET` en `/` de acceso público, delegando la consulta en `comentariosController.getByPublicacion` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /
+* **Comportamiento interno**: Mapea `POST` en `/` protegido bajo `authMiddleware`, derivando el flujo a `comentariosController.create` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### DELETE /:id
+* **Comportamiento interno**: Mapea `DELETE` en `/:id` protegido bajo `authMiddleware`, derivando la baja a `comentariosController.remove` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Comunidades (comunidades.js)
+
+##### GET /
+* **Comportamiento interno**: Mapea `GET` en `/` de acceso público para obtener el listado, delegando en `comunidadesController.getAll` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /:id
+* **Comportamiento interno**: Mapea `GET` en la ruta dinámica `/:id` de acceso público, delegando en `comunidadesController.getById` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /
+* **Comportamiento interno**: Mapea `POST` en `/` protegido bajo `authMiddleware`, derivando la creación a `comunidadesController.create` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /:id/unirse
+* **Comportamiento interno**: Mapea `POST` en `/:id/unirse` protegido bajo `authMiddleware`, derivando la acción a `comunidadesController.join` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### DELETE /:id/abandonar
+* **Comportamiento interno**: Mapea `DELETE` en `/:id/abandonar` protegido bajo `authMiddleware`, derivando la acción a `comunidadesController.leave` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Recursos Multimedia (media.js)
+
+##### Middlewares Globales
+* **Comportamiento interno**: Aplica `router.use(authMiddleware)`, forzando la validación de sesión tokenizada para todas las subrutas del archivo.
+
+##### POST /signature
+* **Comportamiento interno**: Mapea `POST` en `/signature` delegando la generación de firmas de subida en `mediaController.signature` a través de `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /commit
+* **Comportamiento interno**: Mapea `POST` en `/commit` delegando la confirmación del asset en `mediaController.commit` a través de `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Notificaciones (notificaciones.js)
+
+##### GET /
+* **Comportamiento interno**: Mapea `GET` en `/` protegido bajo `authMiddleware`, derivando la consulta a `notificacionesController.getAll` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /no-leidas
+* **Comportamiento interno**: Mapea `GET` en `/no-leidas` protegido bajo `authMiddleware`, derivando el conteo a `notificacionesController.countUnread` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### PATCH /leer-todas
+* **Comportamiento interno**: Mapea `PATCH` en `/leer-todas` protegido bajo `authMiddleware`, derivando la actualización masiva a `notificacionesController.markAllRead` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### PATCH /:id/leer
+* **Comportamiento interno**: Mapea `PATCH` en `/:id/leer` protegido bajo `authMiddleware`, derivando la actualización a `notificacionesController.markAsRead` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### DELETE /:id
+* **Comportamiento interno**: Mapea `DELETE` en `/:id` protegido bajo `authMiddleware`, derivando la eliminación física a `notificacionesController.remove` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Publicaciones (publicaciones.js)
+
+##### GET /
+* **Comportamiento interno**: Mapea `GET` en `/` de acceso público para obtener el feed completo de publicaciones, delegando en `publicacionesController.getAll` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /:id
+* **Comportamiento interno**: Mapea `GET` en la ruta dinámica `/:id` para ver el detalle de un post específico, delegando en `publicacionesController.getById` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /
+* **Comportamiento interno**: Mapea `POST` en `/` protegido bajo el middleware `authMiddleware`, derivando la creación del post a `publicacionesController.create` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### DELETE /:id
+* **Comportamiento interno**: Mapea `DELETE` en la ruta dinámica `/:id` protegido bajo `authMiddleware`, derivando el borrado a `publicacionesController.remove` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### POST /:id/votar
+* **Comportamiento interno**: Mapea `POST` en `/:id/votar` protegido bajo `authMiddleware`, delegando la gestión de upvotes/downvotes a `publicacionesController.vote` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+#### Usuarios (usuarios.js)
+
+##### GET /me
+* **Comportamiento interno**: Mapea `GET` en `/me` protegido bajo `authMiddleware` para obtener los datos del usuario autenticado, delegando en `usuariosController.me` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### GET /isAdmin
+* **Comportamiento interno**: Mapea `GET` en `/isAdmin` protegido bajo `authMiddleware` para verificar los privilegios de administración, delegando en `usuariosController.isAdmin` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### PATCH /perfil
+* **Comportamiento interno**: Mapea `PATCH` en `/perfil` protegido bajo `authMiddleware` para modificaciones parciales del perfil, delegando en `usuariosController.updatePerfil` mediante `asyncHandler`.
+* **Retorno**: Respuesta HTTP gestionada por el controlador.
+
+##### Endpoints de Perfil Autenticado (Contexto Observador)
+* **Comportamiento interno**: Mapea rutas dinámicas protegidas bajo `authMiddleware` que delegan en el controlador mediante `asyncHandler` para obtener o modificar información filtrada por un `username` interactuando con la sesión activa:
+  * `GET /perfil/:username` $\rightarrow$ `usuariosController.getProfile`
+  * `GET /perfil/:username/publicaciones` $\rightarrow$ `usuariosController.getPublicaciones`
+  * `GET /perfil/:username/comentarios` $\rightarrow$ `usuariosController.getComentarios`
+  * `GET /perfil/:username/compartidos` $\rightarrow$ `usuariosController.getCompartidos`
+* **Retorno**: Respuestas HTTP gestionadas por sus respectivos métodos en el controlador.
+
+##### Interacciones Sociales Compartidas e Historial
+* **Comportamiento interno**: Mapea endpoints protegidos bajo `authMiddleware` para gestionar flujos relacionales de compartidos y seguimientos entre cuentas mediante `asyncHandler`:
+  * `POST /compartidos/:postId` $\rightarrow$ `usuariosController.sharePost`
+  * `DELETE /compartidos/:postId` $\rightarrow$ `usuariosController.unsharePost`
+  * `POST /:username/follow` $\rightarrow$ `usuariosController.follow`
+  * `DELETE /:username/follow` $\rightarrow$ `usuariosController.unfollow`
+* **Retorno**: Respuestas HTTP gestionadas por sus respectivos métodos en el controlador.
+
+##### Endpoints de Perfil Público (Sin Sesión)
+* **Comportamiento interno**: Mapea accesos de lectura pública indexados por `username` sin restricciones de token/sesión, delegando la ejecución mediante `asyncHandler`:
+  * `GET /:username` $\rightarrow$ `usuariosController.getByUsername`
+  * `GET /:username/publicaciones` $\rightarrow$ `usuariosController.getPublicaciones`
+  * `GET /:username/comunidades` $\rightarrow$ `usuariosController.getComunidades`
+* **Retorno**: Respuestas HTTP gestionadas por el controlador.
