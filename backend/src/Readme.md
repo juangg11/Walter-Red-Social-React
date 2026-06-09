@@ -1,7 +1,70 @@
 # Walter Readme Backend
 
 Este módulo contiene la lógica de acoplamiento de la API, encargada de gestionar las peticiones HTTP entrantes, validar los datos de entrada y conectar con la capa de negocio.
+---
 
+## Middlewares
+
+Los middlewares interceptan las solicitudes HTTP entrantes para aplicar validaciones de seguridad, control de tasa de peticiones, autenticación de identidad y el manejo unificado de errores antes o después de interactuar con los controladores.
+
+---
+
+### Detalle de los Módulos
+
+#### Autenticación (auth.js)
+
+##### authMiddleware(req, res, next)
+* **Comportamiento interno**:
+  * Obtiene el encabezado de autorización mediante la lectura de `req.headers.authorization`.
+  * Evalúa si el encabezado existe y si empieza estrictamente con el formato `'Bearer '`. Si la condición no se cumple, invoca `next(new AppError(401, 'Token requerido'))`.
+  * Extrae la cadena del token mediante la instrucción `header.split(' ')[1]`.
+  * Introduce un bloque `try/catch` para realizar las siguientes acciones internas:
+    * Verifica el token por medio de `jwt.verify(token, process.env.JWT_SECRET)` para obtener el objeto `payload`.
+    * Realiza una consulta asíncrona a la base de datos ejecutando `await UserModel.findById(payload.id)`.
+    * Evalúa si el resultado devuelto de la búsqueda del usuario es falso o inexistente. Si se cumple la condición, invoca `next(new AppError(401, 'Tu sesion ya no es valida. Inicia sesion otra vez.'))`.
+    * Si el usuario es encontrado con éxito, asigna el valor de `payload` a la propiedad `req.user` y procede llamando a la función de continuación `next()`.
+    * En caso de que se capture un error en el proceso del bloque `try`, el bloque `catch` ejecuta la instrucción `next(new AppError(401, 'Token inválido o expirado'))`.
+
+---
+
+#### Seguridad y Control de Tasa (security.js)
+
+##### securityMiddleware
+* **Tipo de recurso**: Arreglo (`Array`) que contiene configuraciones middleware globales.
+* **Elementos incluidos**:
+  * **`helmet()`**: Inicialización de la librería de seguridad para las cabeceras HTTP.
+  * **`rateLimit()`**: Instancia del limitador de tasa configurada con los siguientes parámetros:
+    * `windowMs`: `15 * 60 * 1000` (Equivalente a un intervalo temporal de 15 minutos).
+    * `limit`: `300` (Límite máximo fijado en 300 solicitudes por cada ventana de tiempo).
+    * `standardHeaders`: `true`.
+    * `legacyHeaders`: `false`.
+    * `message`: Objeto literal conteniendo `{ error: 'Demasiadas peticiones, inténtalo más tarde' }`.
+
+##### authRateLimit
+* **Tipo de recurso**: Instancia específica de `rateLimit()` para las rutas de autenticación.
+* **Parámetros configurados**:
+  * `windowMs`: `15 * 60 * 1000` (Equivalente a un intervalo temporal de 15 minutos).
+  * `limit`: `30` (Límite estricto fijado en 30 intentos de solicitud por cada ventana de tiempo).
+  * `standardHeaders`: `true`.
+  * `legacyHeaders`: `false`.
+  * `message`: Objeto literal conteniendo `{ error: 'Demasiados intentos de autenticación' }`.
+
+---
+
+#### Manejador de Errores (error.js)
+
+##### notFoundHandler(req, res)
+* **Comportamiento interno**:
+  * Captura solicitudes dirigidas a rutas inexistentes y devuelve una respuesta con estado HTTP `404`.
+  * Estructura la respuesta en formato JSON con la propiedad `error` evaluada mediante el string literalizado ``Ruta no encontrada: ${req.method} ${req.originalUrl}``.
+
+##### errorHandler(error, _req, res, _next)
+* **Comportamiento interno**:
+  * Evalúa en primera instancia si la propiedad `error?.code` es estrictamente igual a la cadena `'ER_DUP_ENTRY'`. Si la condición resulta verdadera, retorna una respuesta HTTP con código de estado `409` y el objeto JSON `{ error: 'El recurso ya existe' }`.
+  * Evalúa en segunda instancia si el error corresponde a un error de aplicación controlado llamando a la función `isAppError(error)`. Si se confirma como verdadero, retorna una respuesta utilizando el código numérico provisto en `error.status` junto con un objeto JSON estructurado con:
+    * `error`: El valor asignado en `error.message`.
+    * `details`: Incluye de manera condicional la propiedad `details` si el objeto `error.details` evalúa como verdadero.
+  * Si el error no cumple ninguna de las condiciones de validación previas, ejecuta la salida `console.error(error)` en la terminal del sistema y finaliza enviando un estado HTTP `500` junto con el objeto JSON `{ error: 'Error interno del servidor' }`.
 ---
 
 ## Controllers
@@ -114,13 +177,6 @@ Los DTOs se encargan de la capa de transformación, limpieza y validación estri
 ## Data Transfer Objects (DTOs)
 
 Los DTOs se encargan de la capa de transformación, limpieza y validación estricta de los datos entrantes de las solicitudes HTTP (`req.body`, `req.query`, `req.params`) antes de que la información sea transferida a los servicios de negocio.
-
-### Índice de DTOs
-* [Autenticación (auth.dto.js)](#autenticación-authdtojs)
-* [Chat y Mensajería (chat.dto.js)](#chat-y-mensajería-chatdtojs)
-* [Comentarios (comentarios.dto.js)](#comentarios-comentariosdtojs)
-
----
 
 ### Detalle de los Módulos
 
