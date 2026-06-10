@@ -969,3 +969,304 @@ const sorted = [...data]
 | **Framer Motion** | UX inmersiva y pulida |
 
 ---
+
+## Actualizacion reciente: Notificaciones, Chat y Carga Visual
+
+Esta seccion complementa la documentacion anterior con los cambios recientes aplicados al frontend. Es especialmente util para estudiar `App.jsx`, `Navbar.jsx`, `PostModal.jsx` y `ChatPage.jsx`.
+
+---
+
+## Separacion entre notificaciones sociales y mensajes privados
+
+Antes, los mensajes privados se mezclaban con la campana de notificaciones. Ahora el frontend separa dos conceptos:
+
+| Tipo | Donde aparece | Que representa |
+|------|---------------|----------------|
+| Notificaciones sociales | Campana de `Navbar` | Comentarios y nuevos seguidores |
+| Mensajes privados | Icono de mensajes | Mensajes nuevos de chats |
+
+### Campana de notificaciones sociales
+
+La campana ya no representa mensajes de chat. Solo representa eventos sociales:
+
+- alguien comenta una publicacion del usuario,
+- alguien empieza a seguir al usuario.
+
+Archivos implicados:
+
+```text
+src/App.jsx
+src/components/Navbar.jsx
+src/components/Navbar.module.css
+src/components/PostModal.jsx
+src/components/PostModal.module.css
+```
+
+### Flujo de carga de notificaciones
+
+`App.jsx` carga el contador con:
+
+```javascript
+request('/notificaciones/no-leidas')
+```
+
+Tambien refresca periodicamente el contador mientras el usuario esta autenticado. Asi los comentarios y seguidores nuevos pueden reflejarse aunque el usuario no recargue manualmente.
+
+`Navbar.jsx` abre el panel con:
+
+```javascript
+request('/notificaciones')
+```
+
+### Distincion entre leidas y no leidas
+
+En `Navbar.module.css` se usan clases diferentes:
+
+```text
+notificationItemUnread
+notificationItemRead
+```
+
+Comportamiento:
+
+- las no leidas se destacan visualmente,
+- las leidas quedan visibles pero con menor intensidad,
+- marcar una notificacion como leida ya no la elimina del panel.
+
+### Navegacion al hacer click en una notificacion
+
+`Navbar.jsx` resuelve el destino segun el tipo:
+
+| Tipo | Accion |
+|------|--------|
+| `seguimiento` | Navega a `/u/:username` del usuario que siguio |
+| `comentario` | Abre el post en `PostModal` y destaca el comentario |
+
+El post se carga desde:
+
+```javascript
+request(`/publicaciones/${notification.publicacion_id}?userId=${user?.id}`)
+```
+
+Despues se anade:
+
+```javascript
+highlightedCommentId: notification.comentario_id
+```
+
+Ese dato viaja hasta `PostModal.jsx`.
+
+---
+
+## Resaltado de comentario desde notificacion
+
+`PostModal.jsx` recibe opcionalmente `highlightedCommentId`. Si existe, cuando los comentarios ya estan cargados, busca el comentario en el DOM:
+
+```javascript
+document.getElementById(`comment-${post.highlightedCommentId}`)
+```
+
+Luego hace scroll:
+
+```javascript
+target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+```
+
+Y aplica estilo especial:
+
+```text
+commentItemHighlighted
+```
+
+Sin este flujo, al clicar una notificacion de comentario el usuario solo veria el post, pero no sabria que comentario origino la notificacion. Con este cambio se abre el contexto correcto, se centra el comentario y se distingue visualmente.
+
+---
+
+## Contador independiente de mensajes de chat
+
+Los mensajes privados ahora tienen contador propio en el icono de mensajes de `Navbar`.
+
+Estado en `App.jsx`:
+
+```javascript
+const [chatNotificationCount, setChatNotificationCount] = useState(...);
+```
+
+Este contador:
+
+- aumenta cuando llega un evento WebSocket `chat:message`,
+- no aumenta si el mensaje es del propio usuario,
+- no aumenta si el usuario ya esta en `/mensajes`,
+- se limpia al entrar en la pagina de mensajes,
+- no se mezcla con la campana.
+
+### Persistencia del contador de chat
+
+Para que el numero no desaparezca al recargar, se guarda en `localStorage` con una clave por usuario:
+
+```text
+walter-chat-notifications:{userId}
+```
+
+Funciones auxiliares en `App.jsx`:
+
+```javascript
+getChatNotificationStorageKey(userId)
+readChatNotificationCount(userId)
+writeChatNotificationCount(userId, count)
+```
+
+Si dos usuarios inician sesion en el mismo navegador en momentos distintos, cada uno mantiene su contador separado.
+
+### Cuando se limpia
+
+El contador se borra cuando:
+
+- se navega a la pestana de mensajes,
+- `activeTab === 'messages'`,
+- el usuario cierra sesion.
+
+---
+
+## WebSocket y badge de mensajes
+
+El evento WebSocket se procesa en `App.jsx`.
+
+Flujo simplificado:
+
+```javascript
+ws.onmessage = event => {
+  const payload = JSON.parse(event.data);
+
+  if (payload.type !== 'chat:message') return;
+  if (payload.message.usuario_id === userId) return;
+
+  if (activeTab !== 'messages') {
+    setChatNotificationCount(current => current + 1);
+  }
+};
+```
+
+Idea clave: el WebSocket informa en tiempo real, pero el contador no se guarda en backend como notificacion social. Se conserva como estado de interfaz persistido localmente.
+
+---
+
+## Correccion de carga visual al cambiar de chat
+
+Se corrigio un problema visual en `ChatPage.jsx`: al cambiar entre conversaciones, podian verse mensajes del chat anterior mientras cargaban los mensajes reales del nuevo chat.
+
+### Estado nuevo: `messagesStatus`
+
+```javascript
+const [messagesStatus, setMessagesStatus] = useState('idle');
+```
+
+Valores posibles:
+
+| Estado | Significado |
+|--------|-------------|
+| `idle` | No se ha cargado ningun chat todavia |
+| `loading` | Se estan cargando mensajes del chat activo |
+| `ready` | Los mensajes del chat activo estan listos |
+| `error` | Fallo la carga de mensajes |
+
+### Seleccion segura de chat
+
+Se centralizo en:
+
+```javascript
+function selectChat(chat) {
+  if (Number(activeChat?.id) === Number(chat?.id)) return;
+
+  setActiveChat(chat);
+  setMessages([]);
+  setMessagesStatus(chat?.id ? 'loading' : 'idle');
+  setReplyTo(null);
+  setImageData('');
+  setImageFile(null);
+  setShowEmojis(false);
+}
+```
+
+Esto limpia:
+
+- mensajes anteriores,
+- respuesta activa,
+- preview de imagen/video,
+- selector de emojis.
+
+### Proteccion contra respuestas tardias
+
+Cuando se pide:
+
+```javascript
+request(`/chat/${chatId}/mensajes`)
+```
+
+se verifica que la respuesta pertenece al chat activo antes de aplicar `setMessages`. Si el usuario cambia rapido entre chats y una peticion vieja llega tarde, no pisa los mensajes del chat actual.
+
+### Renderizado condicional de mensajes
+
+En `ChatPage.jsx` ya no se pintan mensajes siempre. Se renderiza segun `messagesStatus`:
+
+```javascript
+messagesStatus === 'loading' // muestra "Cargando mensajes..."
+messagesStatus === 'error'   // muestra error
+messagesStatus === 'ready'   // muestra mensajes reales
+```
+
+Esto elimina el parpadeo molesto y evita que se vean datos antiguos.
+
+---
+
+## Layout ampliado del chat
+
+El chat se ajusto visualmente para ocupar mejor el ancho de pantalla.
+
+En `ChatPage.module.css`:
+
+```css
+.chatPage {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+}
+```
+
+Las burbujas aumentaron su ancho maximo:
+
+```css
+.messageBubble {
+  max-width: min(78%, 48rem);
+}
+```
+
+Esto mejora la lectura en escritorio y evita que la pagina de chat parezca demasiado pequena.
+
+---
+
+## Cambios recientes por archivo
+
+| Archivo | Cambio reciente |
+|---------|-----------------|
+| `src/App.jsx` | Separacion de contadores sociales/chat, persistencia de badge de chat y refresco de notificaciones sociales. |
+| `src/components/Navbar.jsx` | Badge independiente de mensajes, panel de notificaciones con destino inteligente y marcado como leido sin ocultar. |
+| `src/components/Navbar.module.css` | Estilos diferenciados para notificaciones leidas/no leidas. |
+| `src/components/PostModal.jsx` | Soporte para `highlightedCommentId`, scroll al comentario y resaltado. |
+| `src/components/PostModal.module.css` | Estilo visual para comentario destacado. |
+| `src/pages/ChatPage.jsx` | `messagesStatus`, limpieza al cambiar chat y proteccion contra respuestas tardias. |
+| `src/pages/ChatPage.module.css` | Chat a ancho completo y estado visual `messagesLoading`. |
+
+---
+
+## Guia de estudio recomendada con los cambios nuevos
+
+Para entender bien la parte nueva, estudiar en este orden:
+
+1. `App.jsx`: mirar `chatNotificationCount`, WebSocket y persistencia en `localStorage`.
+2. `Navbar.jsx`: mirar `handleNotificationClick`, `markAsRead` y el badge de mensajes.
+3. `PostModal.jsx`: mirar `highlightedCommentId` y scroll al comentario.
+4. `ChatPage.jsx`: mirar `selectChat`, `messagesStatus` y carga segura de mensajes.
+5. `ChatPage.module.css`: mirar `max-width: none`, grid y `messagesLoading`.
+
+Con esto queda clara la diferencia entre notificacion social persistida en backend, aviso local de mensaje privado y carga visual estable de conversaciones.

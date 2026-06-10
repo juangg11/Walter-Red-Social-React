@@ -405,7 +405,7 @@ Walter/
 | `frontend/vitest.config.js` | Entorno `jsdom`, setup tests y cobertura v8 + lcov. |
 | `frontend/eslint.config.js` | Reglas de linting JS/React. |
 | `frontend/vercel.json` | Rewrite global para SPA en Vercel. |
-| `frontend/ReadmeFrontend.md` | Documento frontend legacy (actualmente vacío). |
+| `frontend/ReadmeFront.md` | Documento tecnico del frontend con arquitectura, componentes, flujos y cambios recientes. |
 | `frontend/public/walter.png` | Logo de marca en navbar. |
 | `frontend/public/icons.svg` | Sprite/iconografía pública. |
 
