@@ -103,6 +103,35 @@ function writeChatNotificationCount(userId, count) {
   else globalThis.localStorage?.setItem(key, String(safeCount));
 }
 
+function AdminRoute() {
+  const [allowed, setAllowed] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    request('/usuarios/isAdmin')
+      .then((data) => {
+        if (!ignore) setAllowed(Boolean(data?.isAdmin));
+      })
+      .catch(() => {
+        if (!ignore) setAllowed(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  if (allowed === null) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', color: 'var(--text-secondary)' }}>
+        Comprobando acceso...
+      </div>
+    );
+  }
+
+  return allowed ? <AdminPage /> : <Navigate to="/" replace />;
+}
 function App() {
   const [user, setUser] = useState(getInitialUser);
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,7 +214,7 @@ function App() {
     const safeWsPattern = /^wss?:\/\/[a-zA-Z0-9.\-_:]+(\/[a-zA-Z0-9.\-_/?=&]*)?$/;
 
     if (!safeWsPattern.test(wsUrlStr)) {
-      console.error('Conexión de WebSocket bloqueada: URL con formato malicioso.');
+      console.error('ConexiÃ³n de WebSocket bloqueada: URL con formato malicioso.');
       return undefined;
     }
 
@@ -300,7 +329,7 @@ function App() {
             className={styles.pageContainer}
           >
             <Routes location={location}>
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin" element={<AdminRoute />} />
               <Route path="/" element={
                 <HomePage
                   user={user}
@@ -343,3 +372,5 @@ function App() {
 }
 
 export default App;
+
+

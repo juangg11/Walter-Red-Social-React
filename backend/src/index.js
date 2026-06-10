@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
@@ -19,6 +19,7 @@ import notificacionesRoutes from './routes/notificaciones.js';
 import usuariosRoutes from './routes/usuarios.js';
 import chatRoutes from './routes/chat.js';
 import mediaRoutes from './routes/media.js';
+import adminRoutes from './routes/admin.js';
 
 import pool from './config/db.js';
 
@@ -105,6 +106,7 @@ app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', async (_req, res) => {
   try {
@@ -199,3 +201,4 @@ server.listen(PORT, () => {
     `Swagger disponible en http://localhost:${PORT}/api-docs`
   );
 });
+
