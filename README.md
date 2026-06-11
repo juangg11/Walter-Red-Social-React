@@ -5,6 +5,9 @@
 ![Reliability](https://img.shields.io/badge/Reliability-A-brightgreen)
 ![Security](https://img.shields.io/badge/Security-A-brightgreen)
 
+## Swagger
+https://walter-red-social.onrender.com/api-docs/
+
 ## 1. Tecnologías
 
 ### Backend & Base de Datos
